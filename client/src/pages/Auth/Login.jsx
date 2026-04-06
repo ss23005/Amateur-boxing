@@ -7,39 +7,72 @@ export default function Login() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+    setLoading(true)
     try {
       await login(form.email, form.password)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed')
+      setError(err.response?.data?.message || 'Login failed. Check your credentials.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div>
-      <h2>Login</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          required
-        />
-        <button type="submit">Login</button>
-      </form>
-      <p>No account? <Link to="/register">Register</Link></p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <p className="auth-brand-name">Boxing Platform</p>
+          <p className="auth-brand-sub">The Fighter&apos;s Network</p>
+        </div>
+
+        <h2 className="auth-title">Sign In</h2>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="email">Email Address</label>
+            <input
+              id="email"
+              className="input"
+              type="email"
+              placeholder="you@example.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="password">Password</label>
+            <input
+              id="password"
+              className="input"
+              type="password"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+              autoComplete="current-password"
+            />
+          </div>
+
+          <button className="btn btn-primary" type="submit" disabled={loading}>
+            {loading ? 'Signing In...' : 'Log In'}
+          </button>
+        </form>
+
+        <p className="auth-footer">
+          No account? <Link to="/register">Create one</Link>
+        </p>
+      </div>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import EventDetail from './pages/Events/EventDetail'
 import Feed from './pages/Feed/Feed'
 import Inbox from './pages/Messages/Inbox'
 import Conversation from './pages/Messages/Conversation'
+import ProtectedRoute from './components/common/ProtectedRoute'
 
 const routes = [
   { path: '/', element: <Home /> },
@@ -17,9 +18,9 @@ const routes = [
   { path: '/fighters/:id', element: <FighterProfile /> },
   { path: '/events', element: <EventList /> },
   { path: '/events/:id', element: <EventDetail /> },
-  { path: '/feed', element: <Feed /> },
-  { path: '/messages', element: <Inbox /> },
-  { path: '/messages/:id', element: <Conversation /> },
+  { path: '/feed', element: <ProtectedRoute><Feed /></ProtectedRoute> },
+  { path: '/messages', element: <ProtectedRoute><Inbox /></ProtectedRoute> },
+  { path: '/messages/:id', element: <ProtectedRoute><Conversation /></ProtectedRoute> },
 ]
 
 export default routes
