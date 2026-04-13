@@ -1,5 +1,6 @@
 import Post from '../models/Post.js'
 import Notification from '../models/Notification.js'
+import { uploadImage } from '../utils/cloudinary.js'
 
 export const getPosts = async (req, res) => {
   try {
@@ -30,8 +31,12 @@ export const getPosts = async (req, res) => {
 
 export const createPost = async (req, res) => {
   try {
-    const media = req.file ? [`/uploads/${req.file.filename}`] : []
-    const post  = await Post.create({
+    let media = []
+    if (req.file) {
+      const url = await uploadImage(req.file.buffer, 'abw-posts')
+      media = [url]
+    }
+    const post = await Post.create({
       content: req.body.content ?? '',
       author:  req.user._id,
       media,
