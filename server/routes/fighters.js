@@ -5,6 +5,7 @@ import {
   createFighter,
   updateFighter,
   deleteFighter,
+  syncMyFighterProfile,
 } from '../controllers/fighterController.js'
 import protect from '../middleware/authMiddleware.js'
 
@@ -13,6 +14,8 @@ const router = Router()
 router.get('/', getFighters)
 router.get('/:id', getFighterById)
 router.post('/', protect, createFighter)
+// Called automatically on login if the user is a fighter with no Fighter doc yet
+router.post('/sync', protect, syncMyFighterProfile)
 router.put('/:id', protect, updateFighter)
 router.delete('/:id', protect, deleteFighter)
 

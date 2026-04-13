@@ -17,6 +17,7 @@ const fighterSchema = new mongoose.Schema(
       age: Number,
       nationality: String,
     },
+    location: { type: String, default: '' },
     bio: { type: String, default: '' },
     avatar: { type: String, default: '' },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

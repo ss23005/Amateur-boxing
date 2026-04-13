@@ -7,11 +7,20 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const syncFighterIfNeeded = (userData) => {
+    if (userData?.role === 'fighter') {
+      api.post('/fighters/sync').catch(() => {})
+    }
+  }
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
       api.get('/auth/me')
-        .then((res) => setUser(res.data))
+        .then((res) => {
+          setUser(res.data)
+          syncFighterIfNeeded(res.data)
+        })
         .catch(() => localStorage.removeItem('token'))
         .finally(() => setLoading(false))
     } else {
@@ -23,12 +32,21 @@ export function AuthProvider({ children }) {
     const { data } = await api.post('/auth/login', { email, password })
     localStorage.setItem('token', data.token)
     setUser(data)
+    syncFighterIfNeeded(data)
     return data
   }
 
-  const register = async (name, email, password, role) => {
-    const { data } = await api.post('/auth/register', { name, email, password, role })
+  const register = async (formData) => {
+    const { data } = await api.post('/auth/register', formData)
     localStorage.setItem('token', data.token)
+    // Fetch full profile so fighter fields are immediately available
+    const { data: me } = await api.get('/auth/me')
+    setUser(me)
+    return data
+  }
+
+  const updateUser = async (fields) => {
+    const { data } = await api.put('/auth/me', fields)
     setUser(data)
     return data
   }
@@ -39,7 +57,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )
