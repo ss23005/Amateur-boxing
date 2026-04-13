@@ -26,14 +26,11 @@ const app = express()
 const httpServer = http.createServer(app)
 
 const io = new Server(httpServer, {
-  cors: {
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-  },
+  cors: { origin: '*', methods: ['GET', 'POST'] },
 })
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors())
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')))
 
@@ -65,5 +62,12 @@ io.on('connection', (socket) => {
   })
 })
 
-const PORT = process.env.PORT || 5000
-httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+// Export app for Vercel serverless
+export default app
+
+// Only bind a port when running directly (local dev / Railway)
+const isMain = process.argv[1] === fileURLToPath(import.meta.url)
+if (isMain) {
+  const PORT = process.env.PORT || 5001
+  httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+}
