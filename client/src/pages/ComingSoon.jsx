@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import logo from '../assets/logo.svg'
 
 export default function ComingSoon() {
   const navigate = useNavigate()
@@ -8,7 +9,7 @@ export default function ComingSoon() {
       <div className="cs-card">
 
         <div className="cs-brand">
-          <span className="cs-brand-abbr">ABW</span>
+          <img src={logo} alt="Amateur Boxing World" className="cs-logo" />
         </div>
 
         <div className="cs-gloves">

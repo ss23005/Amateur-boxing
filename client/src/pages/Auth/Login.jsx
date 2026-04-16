@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import logo from '../../assets/logo.svg'
 
 export default function Login() {
   const { login } = useAuth()
@@ -14,8 +15,8 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(form.email, form.password)
-      navigate('/')
+      const data = await login(form.email, form.password)
+      navigate(data.role === 'superadmin' ? '/admin' : '/feed')
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Check your credentials.')
     } finally {
@@ -27,8 +28,7 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <p className="auth-brand-name">Boxing Platform</p>
-          <p className="auth-brand-sub">The Fighter&apos;s Network</p>
+          <img src={logo} alt="Amateur Boxing World" className="auth-logo" />
         </div>
 
         <h2 className="auth-title">Sign In</h2>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { TutorialContext } from '../../context/TutorialContext'
 import api from '../../services/api'
+import logo from '../../assets/logo.svg'
 
 const WEIGHT_CLASSES = [
   'Strawweight', 'Light Flyweight', 'Flyweight', 'Super Flyweight',
@@ -100,9 +101,7 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <p className="auth-brand-mark">ABW</p>
-          <p className="auth-brand-name">Amateur Boxing World</p>
-          <p className="auth-brand-sub">The Fighter&apos;s Network</p>
+          <img src={logo} alt="Amateur Boxing World" className="auth-logo" />
         </div>
 
         {/* Step indicator */}

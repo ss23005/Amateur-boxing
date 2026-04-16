@@ -97,11 +97,16 @@ p { margin: 0; }
 
 .navbar-brand {
   display: flex;
-  align-items: baseline;
-  gap: 9px;
+  align-items: center;
   text-decoration: none;
   margin-right: 32px;
   flex-shrink: 0;
+}
+
+.navbar-logo {
+  height: 36px;
+  width: auto;
+  display: block;
 }
 
 .navbar-brand:hover { text-decoration: none; }
@@ -452,6 +457,12 @@ p { margin: 0; }
 .auth-brand {
   text-align: center;
   margin-bottom: 32px;
+}
+
+.auth-logo {
+  height: 80px;
+  width: auto;
+  display: inline-block;
 }
 
 .auth-brand-mark {
@@ -4367,6 +4378,13 @@ main { flex: 1; background: var(--bg); }
 
 .cs-brand {
   margin-bottom: 32px;
+}
+
+.cs-logo {
+  height: 64px;
+  width: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 .cs-brand-abbr {

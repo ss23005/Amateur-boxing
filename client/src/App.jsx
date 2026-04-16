@@ -6,6 +6,7 @@ import { useAuth } from './hooks/useAuth'
 import Tutorial from './components/Tutorial/Tutorial'
 import routes from './routes'
 import api from './services/api'
+import logo from './assets/logo.svg'
 
 function RootRedirect() {
   const { user, loading } = useAuth()
@@ -126,8 +127,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <Link to="/feed" className="navbar-brand">
-        <span className="navbar-brand-abbr">ABW</span>
-        <span className="navbar-brand-full">Amateur Boxing World</span>
+        <img src={logo} alt="Amateur Boxing World" className="navbar-logo" />
       </Link>
 
       <div className="navbar-links">
