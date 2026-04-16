@@ -79,7 +79,8 @@ export default function PostCard({ post: initialPost, onOpenDetail }) {
 
   const name    = post.author?.name ?? 'Anonymous'
   const initial = name.charAt(0).toUpperCase()
-  const hasImage = post.media?.[0]
+  const rawMedia = post.media?.[0]
+  const hasImage = rawMedia && (rawMedia.startsWith('data:') || rawMedia.startsWith('http'))
 
   return (
     <article className="ig-post">

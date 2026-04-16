@@ -30,19 +30,36 @@ export default function CreatePostModal({ onClose, onCreated }) {
   const onDragOver = (e) => { e.preventDefault(); setDragging(true) }
   const onDragLeave = () => setDragging(false)
 
+  const compressToBase64 = (f) =>
+    new Promise((resolve, reject) => {
+      const img = new Image()
+      const url = URL.createObjectURL(f)
+      img.onload = () => {
+        const MAX = 1000
+        let { width, height } = img
+        if (width > MAX) { height = Math.round(height * MAX / width); width = MAX }
+        if (height > MAX) { width = Math.round(width * MAX / height); height = MAX }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        URL.revokeObjectURL(url)
+        resolve(canvas.toDataURL('image/jpeg', 0.75))
+      }
+      img.onerror = reject
+      img.src = url
+    })
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!file && !caption.trim()) { setError('Add a photo or write something.'); return }
     setLoading(true)
     setError('')
     try {
-      const fd = new FormData()
-      if (file) fd.append('image', file)
-      fd.append('content', caption)
+      let image = null
+      if (file) image = await compressToBase64(file)
 
-      const { data } = await api.post('/feed', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      const { data } = await api.post('/feed', { content: caption, image })
       onCreated(data)
       onClose()
     } catch (err) {
