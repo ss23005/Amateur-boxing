@@ -13,9 +13,6 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 import AdminDashboard from './pages/Admin/AdminDashboard'
 import ComingSoon from './pages/ComingSoon'
 
-// ─── temporarily hidden from client demo ─────────────────────────────────────
-const COMING_SOON = true
-
 const routes = [
   { path: '/login',    element: <Login /> },
   { path: '/register', element: <Register /> },
@@ -23,14 +20,13 @@ const routes = [
   { path: '/feed',     element: <ProtectedRoute><Feed /></ProtectedRoute> },
   { path: '/admin',    element: <ProtectedRoute><AdminDashboard /></ProtectedRoute> },
 
-  // Pages shown as "Coming Soon" during client demo
-  { path: '/fighters',     element: COMING_SOON ? <ComingSoon /> : <FighterList /> },
-  { path: '/fighters/:id', element: COMING_SOON ? <ComingSoon /> : <FighterProfile /> },
-  { path: '/events',       element: COMING_SOON ? <ComingSoon /> : <EventList /> },
-  { path: '/events/:id',   element: COMING_SOON ? <ComingSoon /> : <EventDetail /> },
-  { path: '/messages',     element: COMING_SOON ? <ComingSoon /> : <ProtectedRoute><Inbox /></ProtectedRoute> },
-  { path: '/messages/:id', element: COMING_SOON ? <ComingSoon /> : <ProtectedRoute><Conversation /></ProtectedRoute> },
-  { path: '/gyms',         element: COMING_SOON ? <ComingSoon /> : <GymDirectory /> },
+  { path: '/fighters',     element: <FighterList /> },
+  { path: '/fighters/:id', element: <FighterProfile /> },
+  { path: '/events',       element: <ComingSoon /> },
+  { path: '/events/:id',   element: <ComingSoon /> },
+  { path: '/messages',     element: <ProtectedRoute><Inbox /></ProtectedRoute> },
+  { path: '/messages/:id', element: <ProtectedRoute><Conversation /></ProtectedRoute> },
+  { path: '/gyms',         element: <ComingSoon /> },
 ]
 
 export default routes
