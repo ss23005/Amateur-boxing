@@ -8,13 +8,14 @@ const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
 export const register = async (req, res) => {
-  const { name, email, password, role, weightClass, wins, losses, draws, location, gym, age,
+  const { name, email, password, role, gender, weightClass, wins, losses, draws, location, gym, age,
           gymCity, gymPhone, gymWebsite, gymDescription } = req.body
   try {
     const exists = await User.findOne({ email })
     if (exists) return res.status(400).json({ message: 'Email already in use' })
 
     const fighterFields = role === 'fighter' ? {
+      gender:      gender      || '',
       weightClass: weightClass || '',
       record: {
         wins:   Number(wins)   || 0,
@@ -105,10 +106,11 @@ export const getMe = async (req, res) => {
 
 export const updateMe = async (req, res) => {
   try {
-    const { name, weightClass, wins, losses, draws, location, gym, age, stance } = req.body
+    const { name, gender, weightClass, wins, losses, draws, location, gym, age, stance } = req.body
 
     const updates = {}
     if (name        !== undefined) updates.name        = name
+    if (gender      !== undefined) updates.gender      = gender
     if (weightClass !== undefined) updates.weightClass = weightClass
     if (location    !== undefined) updates.location    = location
     if (gym         !== undefined) updates.gym         = gym

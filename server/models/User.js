@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ['fan', 'fighter', 'coach', 'admin', 'superadmin'], default: 'fan' },
     avatar: { type: String, default: '' },
     // Fighter profile fields
+    gender:      { type: String, enum: ['male', 'female', ''], default: '' },
     weightClass: { type: String, default: '' },
     record: {
       wins:   { type: Number, default: 0 },

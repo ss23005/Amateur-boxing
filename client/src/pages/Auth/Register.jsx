@@ -5,12 +5,28 @@ import { TutorialContext } from '../../context/TutorialContext'
 import api from '../../services/api'
 import logo from '../../assets/logo.svg'
 
-const WEIGHT_CLASSES = [
-  'Strawweight', 'Light Flyweight', 'Flyweight', 'Super Flyweight',
-  'Bantamweight', 'Super Bantamweight', 'Featherweight', 'Super Featherweight',
-  'Lightweight', 'Super Lightweight', 'Welterweight', 'Super Welterweight',
-  'Middleweight', 'Super Middleweight', 'Light Heavyweight', 'Cruiserweight',
-  'Heavyweight', 'Super Heavyweight',
+const MENS_WEIGHT_CLASSES = [
+  { value: 'Minimumweight',     label: 'Minimumweight (Up to 49 kg / 108 lbs)' },
+  { value: 'Flyweight',         label: 'Flyweight (Up to 52 kg / 115 lbs)' },
+  { value: 'Bantamweight',      label: 'Bantamweight (Up to 56 kg / 123 lbs)' },
+  { value: 'Lightweight',       label: 'Lightweight (Up to 60 kg / 132 lbs)' },
+  { value: 'Light Welterweight', label: 'Light Welterweight (Up to 64 kg / 141 lbs)' },
+  { value: 'Welterweight',      label: 'Welterweight (Up to 69 kg / 152 lbs)' },
+  { value: 'Middleweight',      label: 'Middleweight (Up to 75 kg / 165 lbs)' },
+  { value: 'Light Heavyweight', label: 'Light Heavyweight (Up to 81 kg / 178 lbs)' },
+  { value: 'Heavyweight',       label: 'Heavyweight (Up to 91 kg / 201 lbs)' },
+  { value: 'Super Heavyweight', label: 'Super Heavyweight (Over 91 kg / 201 lbs)' },
+]
+
+const WOMENS_WEIGHT_CLASSES = [
+  { value: 'Flyweight',          label: 'Flyweight (48–51 kg)' },
+  { value: 'Bantamweight',       label: 'Bantamweight (51–54 kg)' },
+  { value: 'Featherweight',      label: 'Featherweight (54–57 kg)' },
+  { value: 'Lightweight',        label: 'Lightweight (57–60 kg)' },
+  { value: 'Light Middleweight', label: 'Light Middleweight (65–70 kg)' },
+  { value: 'Middleweight',       label: 'Middleweight (Up to 75 kg)' },
+  { value: 'Light Heavyweight',  label: 'Light Heavyweight (Up to 81 kg)' },
+  { value: 'Heavyweight',        label: 'Heavyweight (Above 81 kg)' },
 ]
 
 const ROLES = [
@@ -28,7 +44,7 @@ export default function Register() {
   const [form, setForm] = useState({
     name: '', email: '', password: '',
     role: '',
-    weightClass: '', wins: '', losses: '', draws: '',
+    gender: '', weightClass: '', wins: '', losses: '', draws: '',
     location: '', gym: '', age: '',
     gymCity: '', gymPhone: '', gymWebsite: '', gymDescription: '',
   })
@@ -273,14 +289,26 @@ export default function Register() {
         {step === 3 && form.role === 'fighter' && (
           <form onSubmit={submit}>
             <div className="form-group">
+              <label className="form-label" htmlFor="gender">Division</label>
+              <select
+                id="gender" className="input"
+                value={form.gender} onChange={(e) => setForm(prev => ({ ...prev, gender: e.target.value, weightClass: '' }))} required
+              >
+                <option value="">Select division</option>
+                <option value="male">Men&apos;s</option>
+                <option value="female">Women&apos;s</option>
+              </select>
+            </div>
+            <div className="form-group">
               <label className="form-label" htmlFor="weightClass">Weight Class</label>
               <select
                 id="weightClass" className="input"
                 value={form.weightClass} onChange={set('weightClass')} required
+                disabled={!form.gender}
               >
-                <option value="">Select weight class</option>
-                {WEIGHT_CLASSES.map((w) => (
-                  <option key={w} value={w}>{w}</option>
+                <option value="">{form.gender ? 'Select weight class' : 'Select division first'}</option>
+                {(form.gender === 'male' ? MENS_WEIGHT_CLASSES : WOMENS_WEIGHT_CLASSES).map((w) => (
+                  <option key={w.value} value={w.value}>{w.label}</option>
                 ))}
               </select>
             </div>

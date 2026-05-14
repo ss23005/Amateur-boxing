@@ -3,13 +3,18 @@ import { Link } from 'react-router-dom'
 import { useFetch } from '../../hooks/useFetch'
 import { useAuth } from '../../hooks/useAuth'
 
-const WEIGHT_CLASSES = [
-  'Strawweight', 'Light Flyweight', 'Flyweight', 'Super Flyweight',
-  'Bantamweight', 'Super Bantamweight', 'Featherweight', 'Super Featherweight',
-  'Lightweight', 'Super Lightweight', 'Welterweight', 'Super Welterweight',
-  'Middleweight', 'Super Middleweight', 'Light Heavyweight', 'Cruiserweight',
-  'Heavyweight', 'Super Heavyweight',
+const MENS_WEIGHT_CLASSES = [
+  'Minimumweight', 'Flyweight', 'Bantamweight', 'Lightweight',
+  'Light Welterweight', 'Welterweight', 'Middleweight',
+  'Light Heavyweight', 'Heavyweight', 'Super Heavyweight',
 ]
+
+const WOMENS_WEIGHT_CLASSES = [
+  'Flyweight', 'Bantamweight', 'Featherweight', 'Lightweight',
+  'Light Middleweight', 'Middleweight', 'Light Heavyweight', 'Heavyweight',
+]
+
+const ALL_WEIGHT_CLASSES = [...new Set([...MENS_WEIGHT_CLASSES, ...WOMENS_WEIGHT_CLASSES])]
 
 const STANCES = ['Orthodox', 'Southpaw', 'Switch']
 
@@ -44,17 +49,25 @@ export default function FighterList() {
   const { user } = useAuth()
 
   const [search,      setSearch]      = useState('')
+  const [gender,      setGender]      = useState('')
   const [weightClass, setWeightClass] = useState('')
   const [stance,      setStance]      = useState('')
   const [sort,        setSort]        = useState('wins')
 
-  const activeFilterCount = [search, weightClass, stance].filter(Boolean).length
+  const activeFilterCount = [search, gender, weightClass, stance].filter(Boolean).length
 
   const clearFilters = () => {
     setSearch('')
+    setGender('')
     setWeightClass('')
     setStance('')
   }
+
+  const weightClassOptions = gender === 'male'
+    ? MENS_WEIGHT_CLASSES
+    : gender === 'female'
+    ? WOMENS_WEIGHT_CLASSES
+    : ALL_WEIGHT_CLASSES
 
   const filtered = useMemo(() => {
     if (!fighters) return []
@@ -69,6 +82,7 @@ export default function FighterList() {
       )
     }
 
+    if (gender)      results = results.filter(f => f.gender === gender)
     if (weightClass) results = results.filter(f => f.weightClass === weightClass)
     if (stance)      results = results.filter(f =>
       f.stats?.stance?.toLowerCase() === stance.toLowerCase()
@@ -90,7 +104,7 @@ export default function FighterList() {
     }
 
     return results
-  }, [fighters, search, weightClass, stance, sort])
+  }, [fighters, search, gender, weightClass, stance, sort])
 
   if (loading) return <div className="loading-state">Loading fighters...</div>
   if (error)   return (
@@ -134,9 +148,15 @@ export default function FighterList() {
           )}
         </div>
 
+        <select className="filter-select" value={gender} onChange={e => { setGender(e.target.value); setWeightClass('') }}>
+          <option value="">All Divisions</option>
+          <option value="male">Men&apos;s</option>
+          <option value="female">Women&apos;s</option>
+        </select>
+
         <select className="filter-select" value={weightClass} onChange={e => setWeightClass(e.target.value)}>
           <option value="">All Weight Classes</option>
-          {WEIGHT_CLASSES.map(w => <option key={w} value={w}>{w}</option>)}
+          {weightClassOptions.map(w => <option key={w} value={w}>{w}</option>)}
         </select>
 
         <select className="filter-select" value={stance} onChange={e => setStance(e.target.value)}>
@@ -158,6 +178,11 @@ export default function FighterList() {
       {/* ── Active chips ── */}
       {activeFilterCount > 0 && (
         <div className="filter-chips">
+          {gender && (
+            <button className="filter-chip" onClick={() => { setGender(''); setWeightClass('') }}>
+              {gender === 'male' ? "Men's" : "Women's"} <XIcon size={11} />
+            </button>
+          )}
           {weightClass && (
             <button className="filter-chip" onClick={() => setWeightClass('')}>
               {weightClass} <XIcon size={11} />
