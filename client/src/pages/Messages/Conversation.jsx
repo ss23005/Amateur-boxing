@@ -108,10 +108,15 @@ export default function Conversation() {
                 </div>
               )}
               <div className={`conv-bubble${isMe ? ' conv-bubble--me' : ''}`}>
-                {msg.sharedPost && (
+                {msg.post && (
                   <div className="conv-shared-post">
                     <p className="conv-shared-label">Shared post</p>
-                    <p className="conv-shared-content">{msg.sharedPost.content}</p>
+                    {msg.post.media?.[0] && (
+                      <img src={msg.post.media[0]} alt="" className="conv-shared-img" />
+                    )}
+                    {msg.post.content && (
+                      <p className="conv-shared-content">{msg.post.content}</p>
+                    )}
                   </div>
                 )}
                 {msg.content && <span>{msg.content}</span>}

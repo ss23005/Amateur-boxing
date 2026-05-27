@@ -78,8 +78,16 @@ export default function Register() {
     e.preventDefault()
     setError('')
     if (step === 1) {
-      if (!form.name || !form.email || !form.password) {
+      if (!form.name.trim() || !form.email.trim() || !form.password) {
         setError('Please fill in all fields.')
+        return
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+        setError('Please enter a valid email address.')
+        return
+      }
+      if (form.password.length < 6) {
+        setError('Password must be at least 6 characters.')
         return
       }
       setStep(2)

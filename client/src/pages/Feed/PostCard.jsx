@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import api from '../../services/api'
 import { useAuth } from '../../hooks/useAuth'
 import { timeAgo } from './feedUtils'
+import SharePostModal from './SharePostModal'
 
 function HeartIcon({ filled }) {
   return filled ? (
@@ -40,6 +41,7 @@ export default function PostCard({ post: initialPost, onOpenDetail }) {
   const { user } = useAuth()
   const [post,      setPost]      = useState(initialPost)
   const [heartAnim, setHeartAnim] = useState(false)
+  const [showShare, setShowShare] = useState(false)
   const lastTap = useRef(0)
 
   const likedByMe = user && post.likes?.some(id =>
@@ -67,7 +69,6 @@ export default function PostCard({ post: initialPost, onOpenDetail }) {
     }
   }
 
-  // Double-tap to like (touch)
   const handleTouchEnd = () => {
     const now = Date.now()
     if (now - lastTap.current < 300) {
@@ -136,7 +137,8 @@ export default function PostCard({ post: initialPost, onOpenDetail }) {
         {user && (
           <button
             className="ig-action-btn ig-share-btn"
-            aria-label="Share"
+            aria-label="Send post"
+            onClick={() => setShowShare(true)}
           >
             <ShareIcon />
           </button>
@@ -160,7 +162,9 @@ export default function PostCard({ post: initialPost, onOpenDetail }) {
         )}
       </div>
 
-
+      {showShare && (
+        <SharePostModal post={post} onClose={() => setShowShare(false)} />
+      )}
 
     </article>
   )

@@ -26,7 +26,7 @@ const routes = [
   { path: '/events/:id',   element: <ComingSoon /> },
   { path: '/messages',     element: <ProtectedRoute><Inbox /></ProtectedRoute> },
   { path: '/messages/:id', element: <ProtectedRoute><Conversation /></ProtectedRoute> },
-  { path: '/gyms',         element: <ComingSoon /> },
+  { path: '/gyms',         element: <GymDirectory /> },
 ]
 
 export default routes
