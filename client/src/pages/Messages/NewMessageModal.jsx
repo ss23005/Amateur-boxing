@@ -72,9 +72,9 @@ export default function NewMessageModal({ onClose, onStart }) {
               onClick={() => handleSelect(u._id)}
               disabled={starting}
             >
-              <div className="nm-result-avatar">{u.name.charAt(0).toUpperCase()}</div>
+              <div className="nm-result-avatar">{(u.username ?? u.name).charAt(0).toUpperCase()}</div>
               <div className="nm-result-info">
-                <span className="nm-result-name">{u.name}</span>
+                <span className="nm-result-name">{u.username ?? u.name}</span>
                 <span className="nm-result-role">{u.role}</span>
               </div>
             </button>

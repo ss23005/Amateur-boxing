@@ -42,7 +42,7 @@ export default function Register() {
 
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
-    name: '', email: '', password: '',
+    name: '', username: '', email: '', password: '',
     role: '',
     gender: '', weightClass: '', wins: '', losses: '', draws: '',
     location: '', gym: '', age: '',
@@ -51,11 +51,50 @@ export default function Register() {
   const [gymStatus, setGymStatus] = useState(null) // null | 'checking' | 'existing' | 'new'
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [fieldVal, setFieldVal] = useState({ name: null, username: null, email: null, password: null })
+
+  const validate = (field, value) => {
+    if (field === 'name') {
+      if (!value.trim()) return null
+      if (value.trim().length < 2) return { type: 'bad', msg: '✗ At least 2 characters required' }
+      return { type: 'ok', msg: '✓ Looks good' }
+    }
+    if (field === 'email') {
+      if (!value.trim()) return null
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim())
+        ? { type: 'ok', msg: '✓ Looks good' }
+        : { type: 'bad', msg: '✗ Enter a valid email address' }
+    }
+    if (field === 'password') {
+      if (!value) return null
+      if (value.length < 6) return { type: 'bad', msg: '✗ Minimum 6 characters' }
+      let s = 0
+      if (value.length >= 8)          s++
+      if (value.length >= 12)         s++
+      if (/[A-Z]/.test(value))        s++
+      if (/[0-9]/.test(value))        s++
+      if (/[^a-zA-Z0-9]/.test(value)) s++
+      if (s <= 2) return { type: 'warn', msg: '⚠ Weak — add numbers or symbols' }
+      if (s <= 3) return { type: 'warn', msg: '⚡ Medium strength' }
+      return { type: 'ok', msg: '✓ Strong password' }
+    }
+    if (field === 'username') {
+      if (!value.trim()) return null
+      if (value.trim().length < 3)  return { type: 'bad',  msg: '✗ At least 3 characters required' }
+      if (value.trim().length > 20) return { type: 'bad',  msg: '✗ Max 20 characters' }
+      if (!/^[a-zA-Z0-9_]+$/.test(value.trim())) return { type: 'bad', msg: '✗ Letters, numbers and underscores only' }
+      return { type: 'ok', msg: '✓ Username looks good' }
+    }
+    return null
+  }
 
   const set = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }))
-    // Reset gym check if the gym name is edited
+    const value = e.target.value
+    setForm((prev) => ({ ...prev, [field]: value }))
     if (field === 'gym') setGymStatus(null)
+    if (['name', 'username', 'email', 'password'].includes(field)) {
+      setFieldVal(prev => ({ ...prev, [field]: validate(field, value) }))
+    }
   }
 
   const checkGym = async (e) => {
@@ -74,12 +113,16 @@ export default function Register() {
 
   const totalSteps = (form.role === 'fighter' || form.role === 'coach') ? 3 : 2
 
-  const goNext = (e) => {
+  const goNext = async (e) => {
     e.preventDefault()
     setError('')
     if (step === 1) {
-      if (!form.name.trim() || !form.email.trim() || !form.password) {
+      if (!form.name.trim() || !form.username.trim() || !form.email.trim() || !form.password) {
         setError('Please fill in all fields.')
+        return
+      }
+      if (!/^[a-zA-Z0-9_]{3,20}$/.test(form.username.trim())) {
+        setError('Username must be 3–20 characters, letters, numbers and underscores only.')
         return
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
@@ -89,6 +132,28 @@ export default function Register() {
       if (form.password.length < 6) {
         setError('Password must be at least 6 characters.')
         return
+      }
+      setLoading(true)
+      try {
+        const [emailRes, usernameRes] = await Promise.all([
+          api.get('/auth/check-email',    { params: { email:    form.email.trim() } }),
+          api.get('/auth/check-username', { params: { username: form.username.trim() } }),
+        ])
+        if (!emailRes.data.available) {
+          setError('An account with this email already exists.')
+          setFieldVal(prev => ({ ...prev, email: { type: 'bad', msg: '✗ Email already in use' } }))
+          return
+        }
+        if (!usernameRes.data.available) {
+          setError('That username is already taken.')
+          setFieldVal(prev => ({ ...prev, username: { type: 'bad', msg: '✗ Username already taken' } }))
+          return
+        }
+      } catch {
+        setError('Could not verify details. Please try again.')
+        return
+      } finally {
+        setLoading(false)
       }
       setStep(2)
     } else if (step === 2) {
@@ -157,28 +222,42 @@ export default function Register() {
             <div className="form-group">
               <label className="form-label" htmlFor="name">Full Name</label>
               <input
-                id="name" className="input" type="text"
-                placeholder="Your name" value={form.name}
+                id="name" className={`input${fieldVal.name ? ` input--${fieldVal.name.type}` : ''}`}
+                type="text" placeholder="Your name" value={form.name}
                 onChange={set('name')} required autoComplete="name"
               />
+              {fieldVal.name && <p className={`field-val field-val--${fieldVal.name.type}`}>{fieldVal.name.msg}</p>}
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="username">Username</label>
+              <input
+                id="username" className={`input${fieldVal.username ? ` input--${fieldVal.username.type}` : ''}`}
+                type="text" placeholder="e.g. IronMike99" value={form.username}
+                onChange={set('username')} required autoComplete="username"
+              />
+              {fieldVal.username && <p className={`field-val field-val--${fieldVal.username.type}`}>{fieldVal.username.msg}</p>}
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="email">Email Address</label>
               <input
-                id="email" className="input" type="email"
-                placeholder="you@example.com" value={form.email}
+                id="email" className={`input${fieldVal.email ? ` input--${fieldVal.email.type}` : ''}`}
+                type="email" placeholder="you@example.com" value={form.email}
                 onChange={set('email')} required autoComplete="email"
               />
+              {fieldVal.email && <p className={`field-val field-val--${fieldVal.email.type}`}>{fieldVal.email.msg}</p>}
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="password">Password</label>
               <input
-                id="password" className="input" type="password"
-                placeholder="••••••••" value={form.password}
+                id="password" className={`input${fieldVal.password ? ` input--${fieldVal.password.type}` : ''}`}
+                type="password" placeholder="••••••••" value={form.password}
                 onChange={set('password')} required autoComplete="new-password"
               />
+              {fieldVal.password && <p className={`field-val field-val--${fieldVal.password.type}`}>{fieldVal.password.msg}</p>}
             </div>
-            <button className="btn btn-primary" type="submit">Next</button>
+            <button className="btn btn-primary" type="submit" disabled={loading}>
+              {loading ? 'Checking…' : 'Next'}
+            </button>
           </form>
         )}
 

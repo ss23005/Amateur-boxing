@@ -44,7 +44,7 @@ export default function Inbox() {
       <div className="inbox-list">
         {conversations?.map((c) => {
           const other = c.participants?.find(p => String(p._id) !== String(user?._id))
-          const name = other?.name ?? 'Conversation'
+          const name = other?.username ?? other?.name ?? 'Conversation'
           const initial = name.charAt(0).toUpperCase()
           const preview = c.lastMessagePreview
           return (

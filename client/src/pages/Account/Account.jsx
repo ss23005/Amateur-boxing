@@ -64,9 +64,9 @@ function UserRow({ u, followingIds, onFollow, onUnfollow }) {
   }
   return (
     <div className="account-user-pill">
-      <div className="account-user-pill-avatar">{u.name.charAt(0).toUpperCase()}</div>
+      <div className="account-user-pill-avatar">{(u.username ?? u.name).charAt(0).toUpperCase()}</div>
       <div className="account-user-pill-info">
-        <span className="account-user-pill-name">{u.name}</span>
+        <span className="account-user-pill-name">{u.username ?? u.name}</span>
         <span className="account-user-pill-role">{ROLE_LABELS[u.role] ?? u.role}</span>
       </div>
       <button
@@ -229,7 +229,7 @@ export default function Account() {
 
   if (!user) return null
 
-  const initial    = user.name.charAt(0).toUpperCase()
+  const initial    = (user.username ?? user.name).charAt(0).toUpperCase()
   const roleLabel  = ROLE_LABELS[user.role] ?? user.role
   const isFighter  = user.role === 'fighter'
   const joinedDate = user.createdAt
@@ -332,7 +332,7 @@ export default function Account() {
           <div className="account-avatar">{initial}</div>
           <div className="account-profile-info">
             <span className={`badge ${isFighter ? 'badge-red' : 'badge-blue'}`}>{roleLabel}</span>
-            <h1 className="account-name">{user.name}</h1>
+            <h1 className="account-name">{user.username ?? user.name}</h1>
             <div className="account-social-counts">
               <span className="account-social-stat">
                 <strong>{social.followers.length}</strong> followers
@@ -477,6 +477,7 @@ export default function Account() {
 
           <div className="account-section">
             <p className="account-section-label">Account</p>
+            <Field label="Username"     value={user.username ? `@${user.username}` : '—'} />
             <Field label="Full Name"    value={user.name} />
             <Field label="Email"        value={user.email} />
             <Field label="Role"         value={roleLabel} />

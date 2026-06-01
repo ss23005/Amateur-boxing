@@ -8,11 +8,15 @@ const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
 export const register = async (req, res) => {
-  const { name, email, password, role, gender, weightClass, wins, losses, draws, location, gym, age,
+  const { name, username, email, password, role, gender, weightClass, wins, losses, draws, location, gym, age,
           gymCity, gymPhone, gymWebsite, gymDescription } = req.body
   try {
     const exists = await User.findOne({ email })
     if (exists) return res.status(400).json({ message: 'Email already in use' })
+    if (username) {
+      const usernameTaken = await User.findOne({ username: username.toLowerCase().trim() })
+      if (usernameTaken) return res.status(400).json({ message: 'Username already taken' })
+    }
 
     const fighterFields = role === 'fighter' ? {
       gender:      gender      || '',
@@ -49,12 +53,12 @@ export const register = async (req, res) => {
       gymId = gymDoc._id
     }
 
-    const user = await User.create({ name, email, password, role, gymId, ...fighterFields })
+    const user = await User.create({ name, username: username?.toLowerCase().trim(), email, password, role, gymId, ...fighterFields })
 
     // Auto-create Fighter document so the user appears on the leaderboard immediately
     if (role === 'fighter') {
       await Fighter.create({
-        name: user.name,
+        name: user.username || user.name,
         weightClass: user.weightClass || '',
         record: {
           wins:   user.record?.wins   ?? 0,
@@ -70,12 +74,35 @@ export const register = async (req, res) => {
     }
 
     res.status(201).json({
-      _id:   user._id,
-      name:  user.name,
-      email: user.email,
-      role:  user.role,
-      token: generateToken(user._id),
+      _id:      user._id,
+      name:     user.name,
+      username: user.username,
+      email:    user.email,
+      role:     user.role,
+      token:    generateToken(user._id),
     })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const checkUsername = async (req, res) => {
+  try {
+    const { username } = req.query
+    if (!username) return res.status(400).json({ message: 'Username required' })
+    const exists = await User.findOne({ username: username.toLowerCase().trim() })
+    res.json({ available: !exists })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const checkEmail = async (req, res) => {
+  try {
+    const { email } = req.query
+    if (!email) return res.status(400).json({ message: 'Email required' })
+    const exists = await User.findOne({ email: email.toLowerCase().trim() })
+    res.json({ available: !exists })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
@@ -89,11 +116,12 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
     res.json({
-      _id:   user._id,
-      name:  user.name,
-      email: user.email,
-      role:  user.role,
-      token: generateToken(user._id),
+      _id:      user._id,
+      name:     user.name,
+      username: user.username,
+      email:    user.email,
+      role:     user.role,
+      token:    generateToken(user._id),
     })
   } catch (err) {
     res.status(500).json({ message: err.message })

@@ -5,8 +5,8 @@ import Fighter from '../models/Fighter.js'
 export const getSocialData = async (req, res) => {
   try {
     const me = await User.findById(req.user._id)
-      .populate('following', 'name avatar role')
-      .populate('followers', 'name avatar role')
+      .populate('following', 'name username avatar role')
+      .populate('followers', 'name username avatar role')
       .select('following followers')
     res.json({ following: me.following, followers: me.followers })
   } catch (err) {
@@ -19,10 +19,13 @@ export const searchUsers = async (req, res) => {
   if (!q || q.trim().length < 2) return res.json([])
   try {
     const users = await User.find({
-      name: { $regex: q.trim(), $options: 'i' },
+      $or: [
+        { name:     { $regex: q.trim(), $options: 'i' } },
+        { username: { $regex: q.trim(), $options: 'i' } },
+      ],
       _id: { $ne: req.user._id },
     })
-      .select('name avatar role')
+      .select('name username avatar role')
       .limit(20)
     res.json(users)
   } catch (err) {

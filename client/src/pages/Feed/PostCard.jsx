@@ -78,7 +78,7 @@ export default function PostCard({ post: initialPost, onOpenDetail }) {
     lastTap.current = now
   }
 
-  const name    = post.author?.name ?? 'Anonymous'
+  const name    = post.author?.username ?? post.author?.name ?? 'Anonymous'
   const initial = name.charAt(0).toUpperCase()
   const rawMedia = post.media?.[0]
   const hasImage = rawMedia && (rawMedia.startsWith('data:') || rawMedia.startsWith('http'))

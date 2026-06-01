@@ -10,7 +10,7 @@ export const getFighters = async (req, res) => {
     if (stance)      query['stats.stance'] = stance
     if (nationality) query['stats.nationality'] = { $regex: nationality, $options: 'i' }
 
-    let dbQuery = Fighter.find(query).populate('user', 'name avatar location')
+    let dbQuery = Fighter.find(query).populate('user', 'name username avatar location')
 
     if (sort === 'wins')    dbQuery = dbQuery.sort({ 'record.wins': -1 })
     else if (sort === 'newest') dbQuery = dbQuery.sort({ createdAt: -1 })
@@ -25,7 +25,7 @@ export const getFighters = async (req, res) => {
 
 export const getFighterById = async (req, res) => {
   try {
-    const fighter = await Fighter.findById(req.params.id).populate('user', 'name avatar')
+    const fighter = await Fighter.findById(req.params.id).populate('user', 'name username avatar')
     if (!fighter) return res.status(404).json({ message: 'Fighter not found' })
     res.json(fighter)
   } catch (err) {

@@ -87,10 +87,10 @@ export default function Conversation() {
       <Link to="/messages" className="back-link">← Back to Inbox</Link>
 
       <div className="conv-header">
-        <div className="conv-header-avatar">{other?.name?.charAt(0)?.toUpperCase() ?? '?'}</div>
+        <div className="conv-header-avatar">{(other?.username ?? other?.name)?.charAt(0)?.toUpperCase() ?? '?'}</div>
         <div>
           <p className="page-eyebrow">Messages</p>
-          <h1 className="page-title">{other?.name ?? 'Conversation'}</h1>
+          <h1 className="page-title">{other?.username ?? other?.name ?? 'Conversation'}</h1>
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export default function Conversation() {
             <div key={msg._id ?? i} className={`conv-bubble-row${isMe ? ' conv-bubble-row--me' : ''}`}>
               {!isMe && (
                 <div className="conv-bubble-avatar">
-                  {(msg.sender?.name ?? other?.name ?? '?').charAt(0).toUpperCase()}
+                  {(msg.sender?.username ?? msg.sender?.name ?? other?.username ?? other?.name ?? '?').charAt(0).toUpperCase()}
                 </div>
               )}
               <div className={`conv-bubble${isMe ? ' conv-bubble--me' : ''}`}>

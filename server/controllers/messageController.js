@@ -3,7 +3,7 @@ import Conversation from '../models/Conversation.js'
 export const getConversations = async (req, res) => {
   try {
     const conversations = await Conversation.find({ participants: req.user._id })
-      .populate('participants', 'name avatar')
+      .populate('participants', 'name username avatar')
       .sort({ lastMessage: -1 })
 
     // Attach last message preview and fix participants
@@ -28,12 +28,12 @@ export const getConversation = async (req, res) => {
     const conversation = await Conversation.findOne({
       _id: conversationId,
       participants: req.user._id,
-    }).populate('participants', 'name avatar')
+    }).populate('participants', 'name username avatar')
 
     if (!conversation) return res.status(404).json({ message: 'Conversation not found' })
 
     // Populate sender info and shared posts in messages
-    await conversation.populate('messages.sender', 'name avatar')
+    await conversation.populate('messages.sender', 'name username avatar')
     await conversation.populate('messages.post', 'content media author')
 
     res.json(conversation)
@@ -47,13 +47,13 @@ export const getOrCreateConversation = async (req, res) => {
   try {
     let conversation = await Conversation.findOne({
       participants: { $all: [req.user._id, recipientId] },
-    }).populate('participants', 'name avatar')
+    }).populate('participants', 'name username avatar')
 
     if (!conversation) {
       conversation = await Conversation.create({
         participants: [req.user._id, recipientId],
       })
-      await conversation.populate('participants', 'name avatar')
+      await conversation.populate('participants', 'name username avatar')
     }
     res.json(conversation)
   } catch (err) {
@@ -82,7 +82,7 @@ export const sendMessage = async (req, res) => {
     await conversation.save()
 
     const newMessage = conversation.messages[conversation.messages.length - 1]
-    await conversation.populate('messages.sender', 'name avatar')
+    await conversation.populate('messages.sender', 'name username avatar')
     await conversation.populate('messages.post', 'content media author')
     const populated = conversation.messages.id(newMessage._id)
 

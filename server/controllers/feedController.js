@@ -12,8 +12,8 @@ export const getPosts = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate('author', 'name avatar')
-        .populate('comments.author', 'name avatar'),
+        .populate('author', 'name username avatar')
+        .populate('comments.author', 'name username avatar'),
       Post.countDocuments(),
     ])
 
@@ -36,7 +36,7 @@ export const createPost = async (req, res) => {
       author:  req.user._id,
       media,
     })
-    await post.populate('author', 'name avatar')
+    await post.populate('author', 'name username avatar')
     res.status(201).json(post)
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -72,7 +72,7 @@ export const addComment = async (req, res) => {
 
     post.comments.push({ author: req.user._id, content: req.body.content })
     await post.save()
-    await post.populate('comments.author', 'name avatar')
+    await post.populate('comments.author', 'name username avatar')
 
     // Notify post author (not self)
     if (post.author.toString() !== req.user._id.toString()) {
