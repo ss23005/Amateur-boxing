@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react'
+import { useState, useContext, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { TutorialContext } from '../../context/TutorialContext'
@@ -52,6 +52,24 @@ export default function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [fieldVal, setFieldVal] = useState({ name: null, username: null, email: null, password: null })
+  const usernameTimer = useRef(null)
+
+  const checkUsernameAvailability = (value) => {
+    clearTimeout(usernameTimer.current)
+    usernameTimer.current = setTimeout(async () => {
+      try {
+        const { data } = await api.get('/auth/check-username', { params: { username: value.trim() } })
+        setFieldVal(prev => ({
+          ...prev,
+          username: data.available
+            ? { type: 'ok',  msg: '✓ Username is available' }
+            : { type: 'bad', msg: '✗ Username already taken' },
+        }))
+      } catch {
+        // silently ignore network errors on live check
+      }
+    }, 500)
+  }
 
   const validate = (field, value) => {
     if (field === 'name') {
@@ -93,7 +111,12 @@ export default function Register() {
     setForm((prev) => ({ ...prev, [field]: value }))
     if (field === 'gym') setGymStatus(null)
     if (['name', 'username', 'email', 'password'].includes(field)) {
-      setFieldVal(prev => ({ ...prev, [field]: validate(field, value) }))
+      const result = validate(field, value)
+      setFieldVal(prev => ({ ...prev, [field]: result }))
+      if (field === 'username' && result?.type === 'ok') {
+        setFieldVal(prev => ({ ...prev, username: { type: 'warn', msg: 'Checking…' } }))
+        checkUsernameAvailability(value)
+      }
     }
   }
 

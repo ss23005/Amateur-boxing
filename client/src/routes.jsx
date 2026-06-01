@@ -3,8 +3,6 @@ import Register from './pages/Auth/Register'
 import Account from './pages/Account/Account'
 import FighterList from './pages/Fighters/FighterList'
 import FighterProfile from './pages/Fighters/FighterProfile'
-import EventList from './pages/Events/EventList'
-import EventDetail from './pages/Events/EventDetail'
 import Feed from './pages/Feed/Feed'
 import Inbox from './pages/Messages/Inbox'
 import Conversation from './pages/Messages/Conversation'
@@ -22,8 +20,6 @@ const routes = [
 
   { path: '/fighters',     element: <FighterList /> },
   { path: '/fighters/:id', element: <FighterProfile /> },
-  { path: '/events',       element: <ComingSoon /> },
-  { path: '/events/:id',   element: <ComingSoon /> },
   { path: '/messages',     element: <ProtectedRoute><Inbox /></ProtectedRoute> },
   { path: '/messages/:id', element: <ProtectedRoute><Conversation /></ProtectedRoute> },
   { path: '/gyms',         element: <GymDirectory /> },

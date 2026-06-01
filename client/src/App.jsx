@@ -132,7 +132,6 @@ function Navbar() {
 
       <div className="navbar-links">
         <NavLink to="/fighters" className={({ isActive }) => `navbar-link${isActive ? ' active' : ''}`}>Fighters</NavLink>
-        <NavLink to="/events"   className={({ isActive }) => `navbar-link${isActive ? ' active' : ''}`}>Events</NavLink>
         <NavLink to="/gyms"     className={({ isActive }) => `navbar-link${isActive ? ' active' : ''}`}>Gyms</NavLink>
         <NavLink to="/feed"     className={({ isActive }) => `navbar-link${isActive ? ' active' : ''}`}>Feed</NavLink>
         {user && <NavLink to="/messages" className={({ isActive }) => `navbar-link${isActive ? ' active' : ''}`}>Messages</NavLink>}
@@ -178,14 +177,6 @@ function MobileNav() {
           <path d="M4 20c0-3.8 3.6-7 8-7s8 3.2 8 7"/>
         </svg>
         <span>Fighters</span>
-      </NavLink>
-
-      <NavLink to="/events" className={cls}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="17" rx="2"/>
-          <path d="M8 2v4M16 2v4M3 10h18"/>
-        </svg>
-        <span>Events</span>
       </NavLink>
 
       <NavLink to="/gyms" className={cls}>
