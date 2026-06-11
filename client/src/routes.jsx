@@ -1,5 +1,7 @@
 import Login from './pages/Auth/Login'
 import Register from './pages/Auth/Register'
+import PreSignup from './pages/Auth/PreSignup'
+import PreLogin from './pages/Auth/PreLogin'
 import Account from './pages/Account/Account'
 import FighterList from './pages/Fighters/FighterList'
 import FighterProfile from './pages/Fighters/FighterProfile'
@@ -9,9 +11,12 @@ import Conversation from './pages/Messages/Conversation'
 import GymDirectory from './pages/Gyms/GymDirectory'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import AdminDashboard from './pages/Admin/AdminDashboard'
-import ComingSoon from './pages/ComingSoon'
+import Discover from './pages/Discover/Discover'
+import UserPublicProfile from './pages/Users/UserPublicProfile'
 
 const routes = [
+  { path: '/welcome',  element: <PreSignup />, noNav: true },
+  { path: '/sign-in',  element: <PreLogin />,  noNav: true },
   { path: '/login',    element: <Login /> },
   { path: '/register', element: <Register /> },
   { path: '/account',  element: <ProtectedRoute><Account /></ProtectedRoute> },
@@ -23,6 +28,9 @@ const routes = [
   { path: '/messages',     element: <ProtectedRoute><Inbox /></ProtectedRoute> },
   { path: '/messages/:id', element: <ProtectedRoute><Conversation /></ProtectedRoute> },
   { path: '/gyms',         element: <GymDirectory /> },
+
+  { path: '/discover',   element: <Discover />,           noNav: true },
+  { path: '/users/:id',  element: <UserPublicProfile />,  noNav: true },
 ]
 
 export default routes

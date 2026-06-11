@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { BrowserRouter, Routes, Route, Link, NavLink, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, NavLink, Navigate, useLocation, matchPath } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { TutorialProvider } from './context/TutorialContext'
 import { useAuth } from './hooks/useAuth'
@@ -12,7 +12,7 @@ function RootRedirect() {
   const { user, loading } = useAuth()
   if (loading) return null
   if (user?.role === 'superadmin') return <Navigate to="/admin" replace />
-  return <Navigate to={user ? '/feed' : '/register'} replace />
+  return <Navigate to={user ? '/feed' : '/welcome'} replace />
 }
 
 function timeAgoShort(date) {
@@ -220,9 +220,13 @@ function MobileNav() {
 
 function AppShell() {
   const { user } = useAuth()
+  const location = useLocation()
   const isSuperAdmin = user?.role === 'superadmin'
+  const isNoNav = routes
+    .filter(r => r.noNav)
+    .some(r => matchPath(r.path, location.pathname))
 
-  if (isSuperAdmin) {
+  if (isSuperAdmin || isNoNav) {
     return (
       <Routes>
         <Route path="/" element={<RootRedirect />} />

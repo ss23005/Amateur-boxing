@@ -106,3 +106,26 @@ export const getFollowStatus = async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 }
+
+export const getPublicUsers = async (req, res) => {
+  try {
+    const users = await User.find({ role: { $nin: ['superadmin', 'admin'] } })
+      .select('name username avatar role weightClass record location age gender gym createdAt followers following')
+      .sort({ createdAt: -1 })
+      .limit(200)
+    res.json(users)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const getUserPublicProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('name username avatar role weightClass record location age gender gym createdAt followers following')
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    res.json(user)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
