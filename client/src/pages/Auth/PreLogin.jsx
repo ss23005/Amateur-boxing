@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import logo from '../../assets/logo.svg'
 
@@ -11,11 +11,13 @@ const FEATURES = [
 ]
 
 export default function PreLogin() {
-  const { login } = useAuth()
+  const { login, user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  if (!authLoading && user) return <Navigate to="/discover" replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -36,8 +38,8 @@ export default function PreLogin() {
       {/* ── Left hero panel ── */}
       <div className="presignup-hero">
         <div className="presignup-hero-inner">
-          <img src={logo} alt="Amateur Boxing World" className="presignup-hero-logo" />
-          <h1 className="presignup-hero-title">Amateur Boxing World</h1>
+          <img src={logo} alt="Boxing Amateur" className="presignup-hero-logo" />
+          <h1 className="presignup-hero-title">Boxing Amateur</h1>
           <p className="presignup-hero-sub">The home of amateur boxing. Track records, find gyms, and connect with fighters worldwide.</p>
           <ul className="presignup-features">
             {FEATURES.map(f => (
@@ -59,16 +61,16 @@ export default function PreLogin() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label" htmlFor="pl-email">Email Address</label>
+              <label className="form-label" htmlFor="pl-email">Email or Username</label>
               <input
                 id="pl-email"
                 className="input"
-                type="email"
-                placeholder="you@example.com"
+                type="text"
+                placeholder="you@example.com or @username"
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
                 required
-                autoComplete="email"
+                autoComplete="username"
               />
             </div>
 

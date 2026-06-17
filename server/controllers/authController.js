@@ -1,8 +1,10 @@
+import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 import Fighter from '../models/Fighter.js'
 import Gym from '../models/Gym.js'
 import { geocodeGym } from '../utils/geocode.js'
+import { sendVerificationEmail } from '../utils/email.js'
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' })
@@ -53,7 +55,20 @@ export const register = async (req, res) => {
       gymId = gymDoc._id
     }
 
-    const user = await User.create({ name, username: username?.toLowerCase().trim(), email, password, role, gymId, ...fighterFields })
+    const verificationToken   = crypto.randomInt(100000, 1000000).toString() // 6-digit code
+    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000) // 15 min
+
+    const user = await User.create({
+      name,
+      username: username?.toLowerCase().trim(),
+      email,
+      password,
+      role,
+      gymId,
+      emailVerificationToken:   verificationToken,
+      emailVerificationExpires: verificationExpires,
+      ...fighterFields,
+    })
 
     // Auto-create Fighter document so the user appears on the leaderboard immediately
     if (role === 'fighter') {
@@ -73,13 +88,22 @@ export const register = async (req, res) => {
       })
     }
 
+    // Fire verification email (non-blocking — don't fail registration if email fails)
+    sendVerificationEmail(user, verificationToken)
+      .then(() => console.log(`✓ Verification email sent to ${user.email}`))
+      .catch(err => {
+        console.error('Verification email failed:', err.message)
+        if (err.response) console.error('SendGrid response:', JSON.stringify(err.response.body))
+      })
+
     res.status(201).json({
-      _id:      user._id,
-      name:     user.name,
-      username: user.username,
-      email:    user.email,
-      role:     user.role,
-      token:    generateToken(user._id),
+      _id:           user._id,
+      name:          user.name,
+      username:      user.username,
+      email:         user.email,
+      role:          user.role,
+      emailVerified: user.emailVerified,
+      token:         generateToken(user._id),
     })
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -111,7 +135,11 @@ export const checkEmail = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body
   try {
-    const user = await User.findOne({ email })
+    const identifier = email?.trim().toLowerCase()
+    const isEmail = identifier?.includes('@')
+    const user = await User.findOne(
+      isEmail ? { email: identifier } : { username: identifier }
+    )
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
@@ -130,6 +158,47 @@ export const login = async (req, res) => {
 
 export const getMe = async (req, res) => {
   res.json(req.user)
+}
+
+export const verifyEmail = async (req, res) => {
+  const { code } = req.body
+  if (!code) return res.status(400).json({ message: 'Code required' })
+  try {
+    const user = await User.findOne({
+      _id:                      req.user._id,
+      emailVerificationToken:   code.trim(),
+      emailVerificationExpires: { $gt: new Date() },
+    })
+    if (!user) return res.status(400).json({ message: 'Incorrect code or it has expired' })
+
+    user.emailVerified            = true
+    user.emailVerificationToken   = null
+    user.emailVerificationExpires = null
+    await user.save()
+
+    res.json({ message: 'Email verified successfully' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const resendVerification = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+    if (user.emailVerified) return res.status(400).json({ message: 'Email already verified' })
+
+    const token   = crypto.randomInt(100000, 1000000).toString()
+    const expires = new Date(Date.now() + 15 * 60 * 1000)
+
+    user.emailVerificationToken   = token
+    user.emailVerificationExpires = expires
+    await user.save()
+
+    await sendVerificationEmail(user, token)
+    res.json({ message: 'Verification email sent' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
 }
 
 export const updateMe = async (req, res) => {

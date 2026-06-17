@@ -6,40 +6,40 @@ import api from '../../services/api'
 const ROLE_LABEL = { fighter: 'Amateur Fighter', coach: 'Boxing Coach', fan: 'Fan' }
 
 export default function UserPublicProfile() {
-  const { id } = useParams()
+  const { username } = useParams()
   const { user: me } = useAuth()
 
-  const [profile, setProfile]     = useState(null)
-  const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState(null)
-  const [following, setFollowing] = useState(false)
+  const [profile, setProfile]           = useState(null)
+  const [loading, setLoading]           = useState(true)
+  const [error, setError]               = useState(null)
+  const [following, setFollowing]       = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
 
-  const isOwnProfile = me && String(me._id) === id
+  const isOwnProfile = me && String(me.username) === username
 
   useEffect(() => {
     setLoading(true)
-    api.get(`/users/${id}/profile`)
+    api.get(`/users/${username}/profile`)
       .then(({ data }) => { setProfile(data); setLoading(false) })
       .catch(() => { setError('User not found'); setLoading(false) })
-  }, [id])
+  }, [username])
 
   useEffect(() => {
     if (!me || isOwnProfile || !profile) return
-    api.get(`/users/${id}/follow-status`)
+    api.get(`/users/${profile._id}/follow-status`)
       .then(({ data }) => setFollowing(data.following))
       .catch(() => {})
-  }, [id, me, isOwnProfile, profile])
+  }, [profile, me, isOwnProfile])
 
   const handleFollow = async () => {
-    if (!me || followLoading) return
+    if (!me || followLoading || !profile?._id) return
     setFollowLoading(true)
     try {
       if (following) {
-        await api.post(`/users/${id}/unfollow`)
+        await api.post(`/users/${profile._id}/unfollow`)
         setFollowing(false)
       } else {
-        await api.post(`/users/${id}/follow`)
+        await api.post(`/users/${profile._id}/follow`)
         setFollowing(true)
       }
     } catch {}
@@ -58,128 +58,129 @@ export default function UserPublicProfile() {
   const wins   = profile.record?.wins   ?? 0
   const losses = profile.record?.losses ?? 0
   const draws  = profile.record?.draws  ?? 0
-  const total  = wins + losses + draws
-  const initial = (profile.name ?? '?').charAt(0).toUpperCase()
+  const bouts  = wins + losses + draws
+  const winPct = bouts > 0 ? Math.round((wins / bouts) * 100) : null
 
-  const detailRows = [
-    isFighter && profile.gender     && { label: 'Division',     value: profile.gender === 'male' ? "Men's" : "Women's" },
-    isFighter && profile.weightClass && { label: 'Weight Class', value: profile.weightClass },
-    profile.age                     && { label: 'Age',           value: `${profile.age} yrs` },
-    profile.location                && { label: 'Location',      value: profile.location },
-    profile.gym                     && { label: 'Gym',           value: profile.gym },
+  const initials = profile.name
+    ? profile.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    : '??'
+
+  const midStats = [
+    isFighter && profile.weightClass && { label: 'weight class', value: profile.weightClass },
+    isFighter && bouts > 0           && { label: 'bouts',        value: bouts },
+    isFighter && winPct !== null     && { label: 'win %',        value: `${winPct}%` },
+    profile.location                 && { label: 'location',     value: profile.location },
+    profile.gym                      && { label: 'gym',          value: profile.gym },
+    { label: 'followers',  value: profile.followers?.length ?? 0 },
+    { label: 'following',  value: profile.following?.length ?? 0 },
+  ].filter(Boolean)
+
+  const rightDetails = [
+    profile.username                                   && { label: 'username',    value: `@${profile.username}` },
+    profile.age                                        && { label: 'age',         value: `${profile.age} yrs` },
+    isFighter && profile.gender                        && { label: 'division',    value: profile.gender === 'male' ? "Men's" : "Women's" },
+    isFighter && profile.stats?.nationality            && { label: 'nationality', value: profile.stats.nationality },
+    isFighter && profile.stats?.stance                 && { label: 'stance',      value: profile.stats.stance },
+    isFighter && profile.stats?.height                 && { label: 'height',      value: profile.stats.height },
+    isFighter && profile.stats?.reach                  && { label: 'reach',       value: profile.stats.reach },
   ].filter(Boolean)
 
   return (
     <div className="br-shell">
 
-      {/* ── Banner ── */}
-      <div className="br-banner">
-        <div className="br-banner-inner">
-          <div className="br-avatar">{initial}</div>
-
-          <div className="br-identity">
-            <div className="br-name">{profile.name}</div>
-            {profile.username && (
-              <div className="br-username">@{profile.username}</div>
-            )}
-            <div className="br-role">{ROLE_LABEL[profile.role] ?? 'Member'}</div>
-            {isFighter && profile.weightClass && (
-              <div className="br-weight-badge">{profile.weightClass}</div>
-            )}
-          </div>
-
-          {me && !isOwnProfile && (
-            <button
-              className={`br-follow-btn${following ? ' br-follow-btn--active' : ''}`}
-              onClick={handleFollow}
-              disabled={followLoading}
-            >
-              {following ? 'Following' : '+ Follow'}
-            </button>
-          )}
-        </div>
+      {/* Simple topbar back link */}
+      <div className="fp2-pub-topbar">
+        <Link to="/discover" className="back-link" style={{ color: 'var(--text-3)' }}>← Discover</Link>
       </div>
 
-      {/* ── Body ── */}
-      <div className="br-body">
+      <div className="page fp2-page fp2-pub-page">
 
-        {/* Left column */}
-        <div className="br-left">
-
-          {/* Record card */}
-          {isFighter && (
-            <div className="br-card">
-              <div className="br-card-title">Record</div>
-              <div className="br-record-grid">
-                <div className="br-record-cell">
-                  <div className="br-record-num br-record-num--w">{wins}</div>
-                  <div className="br-record-label">Wins</div>
-                </div>
-                <div className="br-record-divider" />
-                <div className="br-record-cell">
-                  <div className="br-record-num br-record-num--l">{losses}</div>
-                  <div className="br-record-label">Losses</div>
-                </div>
-                <div className="br-record-divider" />
-                <div className="br-record-cell">
-                  <div className="br-record-num br-record-num--d">{draws}</div>
-                  <div className="br-record-label">Draws</div>
-                </div>
-              </div>
-              {total > 0 && (
-                <div className="br-win-pct">
-                  {Math.round((wins / total) * 100)}% win rate · {total} bout{total !== 1 ? 's' : ''}
-                </div>
-              )}
-            </div>
+        {/* ── Name header ── */}
+        <div className="fp2-header">
+          <div className="fp2-avatar fp2-avatar--top">{initials}</div>
+          <h1 className="fp2-name">{profile.name}</h1>
+          <p className="fp2-division">
+            {ROLE_LABEL[profile.role] ?? 'Member'}
+            {isFighter && profile.weightClass && ` · ${profile.weightClass} Division`}
+          </p>
+          {profile.username && (
+            <p className="fp2-username-sub">@{profile.username}</p>
           )}
-
-          {/* Social card */}
-          <div className="br-card">
-            <div className="br-card-title">Community</div>
-            <div className="br-social-row">
-              <div className="br-social-cell">
-                <div className="br-social-num">{profile.followers?.length ?? 0}</div>
-                <div className="br-social-label">Followers</div>
-              </div>
-              <div className="br-record-divider" />
-              <div className="br-social-cell">
-                <div className="br-social-num">{profile.following?.length ?? 0}</div>
-                <div className="br-social-label">Following</div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Right column – profile info */}
-        <div className="br-right">
-          <div className="br-card">
-            <div className="br-card-title">Profile</div>
-            {detailRows.length > 0 ? (
-              <table className="br-info-table">
+        {/* ── Main 3-column layout ── */}
+        <div className="fp2-layout">
+
+          {/* LEFT: Record boxes + avatar + follow */}
+          <div className="fp2-left">
+            {isFighter && (
+              <div className="fp2-record">
+                <div className="fp2-rbox fp2-rbox--w">
+                  <span className="fp2-rbox-num">{wins}</span>
+                  <span className="fp2-rbox-label">Wins</span>
+                </div>
+                <div className="fp2-rbox fp2-rbox--l">
+                  <span className="fp2-rbox-num">{losses}</span>
+                  <span className="fp2-rbox-label">Losses</span>
+                </div>
+                <div className="fp2-rbox fp2-rbox--d">
+                  <span className="fp2-rbox-num">{draws}</span>
+                  <span className="fp2-rbox-label">Draws</span>
+                </div>
+              </div>
+            )}
+
+            <div className="fp2-avatar fp2-avatar--side">{initials}</div>
+
+            {me && !isOwnProfile && (
+              <button
+                className={`btn btn-sm ${following ? 'btn-outline' : 'btn-red'} fp2-follow-btn`}
+                onClick={handleFollow}
+                disabled={followLoading}
+              >
+                {following ? 'Following' : '+ Follow'}
+              </button>
+            )}
+          </div>
+
+          {/* MIDDLE: Stats */}
+          <div className="fp2-mid">
+            <h3 className="fp2-section-head">{isFighter ? 'Career Stats' : 'Profile'}</h3>
+            {midStats.length > 0 ? (
+              <table className="fp2-stats-table">
                 <tbody>
-                  {detailRows.map(row => (
-                    <tr key={row.label} className="br-info-row">
-                      <td className="br-info-label">{row.label}</td>
-                      <td className="br-info-value">{row.value}</td>
+                  {midStats.map(row => (
+                    <tr key={row.label}>
+                      <td className="fp2-stats-label">{row.label}</td>
+                      <td className="fp2-stats-value">{row.value}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <p style={{ color: 'var(--text-4)', fontSize: 13, margin: 0 }}>No profile details yet.</p>
+              <p className="fp2-empty">No stats on record.</p>
             )}
           </div>
 
-          {!isFighter && (
-            <div className="br-card br-fan-note">
-              <p style={{ color: 'var(--text-3)', fontSize: 14, margin: 0, lineHeight: 1.6 }}>
-                {profile.role === 'coach'
-                  ? 'This member is a boxing coach.'
-                  : 'This member follows amateur boxing.'}
-              </p>
-            </div>
-          )}
+          {/* RIGHT: Fighter info */}
+          <div className="fp2-right">
+            <h3 className="fp2-section-head">Fighter Info</h3>
+            {rightDetails.length > 0 ? (
+              <table className="fp2-stats-table">
+                <tbody>
+                  {rightDetails.map(row => (
+                    <tr key={row.label}>
+                      <td className="fp2-stats-label">{row.label}</td>
+                      <td className="fp2-stats-value">{row.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="fp2-empty">No additional info on record.</p>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

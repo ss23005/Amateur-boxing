@@ -12,7 +12,7 @@ function RootRedirect() {
   const { user, loading } = useAuth()
   if (loading) return null
   if (user?.role === 'superadmin') return <Navigate to="/admin" replace />
-  return <Navigate to={user ? '/feed' : '/welcome'} replace />
+  return <Navigate to={user ? '/discover' : '/welcome'} replace />
 }
 
 function timeAgoShort(date) {
@@ -127,7 +127,7 @@ function Navbar() {
   return (
     <nav className="navbar">
       <Link to="/feed" className="navbar-brand">
-        <img src={logo} alt="Amateur Boxing World" className="navbar-logo" />
+        <img src={logo} alt="Boxing Amateur" className="navbar-logo" />
       </Link>
 
       <div className="navbar-links">
@@ -233,6 +233,7 @@ function AppShell() {
         {routes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
         ))}
+        <Route path="*" element={<Navigate to="/welcome" replace />} />
       </Routes>
     )
   }
@@ -246,6 +247,7 @@ function AppShell() {
           {routes.map(({ path, element }) => (
             <Route key={path} path={path} element={element} />
           ))}
+          <Route path="*" element={<Navigate to="/welcome" replace />} />
         </Routes>
       </main>
       <MobileNav />

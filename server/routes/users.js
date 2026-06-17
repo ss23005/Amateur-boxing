@@ -9,7 +9,7 @@ router.delete('/me', protect, deleteMe)
 router.get('/me/social', protect, getSocialData)
 router.get('/search', protect, searchUsers)
 router.get('/:id/follow-status', protect, getFollowStatus)
-router.get('/:id/profile', getUserPublicProfile)
+router.get('/:username/profile', getUserPublicProfile)
 router.post('/:id/follow', protect, followUser)
 router.post('/:id/unfollow', protect, unfollowUser)
 

@@ -1,5 +1,5 @@
 import { useState, useContext, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { TutorialContext } from '../../context/TutorialContext'
 import api from '../../services/api'
@@ -43,9 +43,11 @@ const FEATURES = [
 ]
 
 export default function PreSignup() {
-  const { register } = useAuth()
+  const { register, user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const tutorial = useContext(TutorialContext)
+
+  if (!authLoading && user) return <Navigate to="/discover" replace />
 
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
@@ -201,7 +203,7 @@ export default function PreSignup() {
     try {
       await register(form)
       tutorial?.startTutorial()
-      navigate('/discover')
+      navigate('/check-email', { state: { email: form.email } })
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.')
     } finally {
@@ -214,8 +216,8 @@ export default function PreSignup() {
       {/* ── Left hero panel ── */}
       <div className="presignup-hero">
         <div className="presignup-hero-inner">
-          <img src={logo} alt="Amateur Boxing World" className="presignup-hero-logo" />
-          <h1 className="presignup-hero-title">Amateur Boxing World</h1>
+          <img src={logo} alt="Boxing Amateur" className="presignup-hero-logo" />
+          <h1 className="presignup-hero-title">Boxing Amateur</h1>
           <p className="presignup-hero-sub">The home of amateur boxing. Track records, find gyms, and connect with fighters worldwide.</p>
           <ul className="presignup-features">
             {FEATURES.map(f => (

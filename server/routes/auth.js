@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { register, login, getMe, updateMe, checkEmail, checkUsername } from '../controllers/authController.js'
+import { register, login, getMe, updateMe, checkEmail, checkUsername, verifyEmail, resendVerification } from '../controllers/authController.js'
 import protect from '../middleware/authMiddleware.js'
 
 const router = Router()
@@ -10,5 +10,7 @@ router.get('/check-username', checkUsername)
 router.post('/login', login)
 router.get('/me', protect, getMe)
 router.put('/me', protect, updateMe)
+router.post('/verify-email', protect, verifyEmail)
+router.post('/resend-verification', protect, resendVerification)
 
 export default router

@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema(
     gymId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Gym', default: null },
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    emailVerified:           { type: Boolean, default: false },
+    emailVerificationToken:  { type: String,  default: null },
+    emailVerificationExpires:{ type: Date,    default: null },
   },
   { timestamps: true }
 )

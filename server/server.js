@@ -1,8 +1,8 @@
+import 'dotenv/config'
 import express from 'express'
 import http from 'http'
 import { Server } from 'socket.io'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import connectDB from './config/db.js'
@@ -19,7 +19,6 @@ import gymRoutes from './routes/gyms.js'
 import userRoutes from './routes/users.js'
 import notificationRoutes from './routes/notifications.js'
 
-dotenv.config()
 connectDB()
 
 const app = express()

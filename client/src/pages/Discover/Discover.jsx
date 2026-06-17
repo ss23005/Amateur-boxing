@@ -10,6 +10,7 @@ const ROLE_COLORS = {
 
 function UserCard({ user }) {
   const { record, role, weightClass, location } = user
+  if (!user.username) return null
   const isFighter = role === 'fighter'
   const roleStyle = ROLE_COLORS[role] ?? ROLE_COLORS.fan
   const initial = (user.name ?? '?').charAt(0).toUpperCase()
@@ -18,7 +19,7 @@ function UserCard({ user }) {
   const draws  = record?.draws  ?? 0
 
   return (
-    <Link to={`/users/${user._id}`} className="user-card">
+    <Link to={`/users/${user.username}`} className="user-card">
       <div className="user-card-avatar">{initial}</div>
       <div className="user-card-name">{user.name}</div>
       {user.username && <div className="user-card-username">@{user.username}</div>}
@@ -57,7 +58,7 @@ function UserCard({ user }) {
 export default function Discover() {
   const { data: users, loading, error } = useFetch('/users/public')
   const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState('')
+  const [roleFilter, setRoleFilter] = useState('fighter')
 
   const filtered = useMemo(() => {
     if (!users) return []
@@ -101,16 +102,15 @@ export default function Discover() {
             )}
           </div>
           <select className="filter-select" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
-            <option value="">All Types</option>
             <option value="fighter">Fighters</option>
-            <option value="coach">Coaches</option>
-            <option value="fan">Fans</option>
+            <option value="">All Members</option>
           </select>
         </div>
 
         {!loading && users && (
           <p className="discover-count">
-            {roleFilter || search ? `${filtered.length} of ${users.length}` : users.length} member{users.length !== 1 ? 's' : ''}
+            {filtered.length} fighter{filtered.length !== 1 ? 's' : ''}
+            {search && ` matching "${search}"`}
           </p>
         )}
 
