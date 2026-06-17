@@ -8,7 +8,7 @@ export const TUTORIAL_STEPS = [
   {
     id: 'welcome',
     route: '/feed',
-    title: 'Welcome to Amateur Boxing World!',
+    title: 'Welcome to Boxing Amateur!',
     body: "You're in — let's take a quick tour so you know where everything lives. You can skip at any time.",
     target: null,
     position: 'center',

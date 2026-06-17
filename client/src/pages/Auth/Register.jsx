@@ -199,7 +199,7 @@ export default function Register() {
     try {
       await register(form)
       tutorial?.startTutorial()
-      navigate('/feed')
+      navigate('/check-email', { state: { email: form.email } })
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.')
     } finally {
@@ -213,7 +213,7 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <img src={logo} alt="Amateur Boxing World" className="auth-logo" />
+          <img src={logo} alt="Boxing Amateur" className="auth-logo" />
         </div>
 
         {/* Step indicator */}

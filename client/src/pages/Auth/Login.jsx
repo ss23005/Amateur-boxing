@@ -28,7 +28,7 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-brand">
-          <img src={logo} alt="Amateur Boxing World" className="auth-logo" />
+          <img src={logo} alt="Boxing Amateur" className="auth-logo" />
         </div>
 
         <h2 className="auth-title">Sign In</h2>
@@ -37,16 +37,16 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label" htmlFor="email">Email Address</label>
+            <label className="form-label" htmlFor="email">Email or Username</label>
             <input
               id="email"
               className="input"
-              type="email"
-              placeholder="you@example.com"
+              type="text"
+              placeholder="you@example.com or @username"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
 

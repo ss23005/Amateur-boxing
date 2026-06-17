@@ -9,7 +9,7 @@ export default function ComingSoon() {
       <div className="cs-card">
 
         <div className="cs-brand">
-          <img src={logo} alt="Amateur Boxing World" className="cs-logo" />
+          <img src={logo} alt="Boxing Amateur" className="cs-logo" />
         </div>
 
         <div className="cs-gloves">
