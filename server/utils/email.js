@@ -1,6 +1,7 @@
 import sgMail from '@sendgrid/mail'
 
 const APP      = 'Boxing Amateur'
+const SLOGAN   = 'Grass roots to greatness'
 const NAVY     = '#0a2463'
 const RED      = '#e8192c'
 const WHITE    = '#ffffff'
@@ -45,8 +46,9 @@ function baseTemplate({ preheader, body }) {
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="padding:32px 40px 28px;text-align:center;">
-                    <p style="margin:0 0 6px;font-family:${FONT_BAR};font-size:13px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.45);">The Home of Amateur Boxing</p>
-                    <p style="margin:0;font-family:${FONT_BAR};font-size:36px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${WHITE};line-height:1;">${APP}</p>
+                    ${process.env.LOGO_URL ? `<img src="${process.env.LOGO_URL}" alt="${APP}" width="72" height="72" style="display:block;margin:0 auto 16px;border-radius:8px;">` : ''}
+                    <p style="margin:0 0 8px;font-family:${FONT_BAR};font-size:38px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${WHITE};line-height:1;">${APP}</p>
+                    <p style="margin:0;font-family:${FONT_BAR};font-size:13px;font-weight:700;font-style:italic;letter-spacing:2px;text-transform:uppercase;color:${RED};line-height:1;">${SLOGAN}</p>
                   </td>
                 </tr>
                 <!-- Red accent stripe -->
@@ -74,8 +76,8 @@ function baseTemplate({ preheader, body }) {
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="padding:20px 40px 24px;text-align:center;">
-                    <p style="margin:0 0 2px;font-family:${FONT_BAR};font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${NAVY};">${APP}</p>
-                    <p style="margin:0 0 14px;font-family:${FONT_DM};font-size:12px;color:${TEXT_3};">The home of amateur boxing</p>
+                    <p style="margin:0 0 4px;font-family:${FONT_BAR};font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${NAVY};">${APP}</p>
+                    <p style="margin:0 0 14px;font-family:${FONT_BAR};font-size:12px;font-weight:700;font-style:italic;letter-spacing:1.5px;text-transform:uppercase;color:${RED};">${SLOGAN}</p>
                     <p style="margin:0;font-family:${FONT_DM};font-size:11px;color:#aeaeb2;line-height:1.6;">
                       You received this email because you created an account on ${APP}.<br>
                       If you didn't sign up, you can safely ignore this email.
@@ -93,6 +95,119 @@ function baseTemplate({ preheader, body }) {
 
 </body>
 </html>`
+}
+
+export async function sendMessageNotificationEmail(recipient, sender, content) {
+  if (!process.env.SENDGRID_API_KEY) return
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+  const clientUrl  = process.env.CLIENT_URL ?? 'https://boxingamateur.com'
+  const preview    = content
+    ? (content.length > 180 ? content.slice(0, 180).trimEnd() + '…' : content)
+    : null
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-family:${FONT_BAR};font-size:28px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:${NAVY};line-height:1.1;">New Message</h1>
+    <p style="margin:0 0 24px;font-family:${FONT_DM};font-size:15px;color:${TEXT_2};line-height:1.65;">
+      <strong style="color:${TEXT};font-weight:600;">${sender.name}</strong> sent you a message on ${APP}.
+    </p>
+
+    ${preview ? `
+    <!-- Message preview card -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:28px;">
+      <tr>
+        <td style="background:#f8f9ff;border:1px solid ${BORDER};border-left:4px solid ${NAVY};border-radius:8px;padding:16px 20px;">
+          <p style="margin:0;font-family:${FONT_DM};font-size:14px;color:${TEXT_2};line-height:1.7;">${preview}</p>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
+
+    <!-- CTA button -->
+    <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px;">
+      <tr>
+        <td style="background:${RED};border-radius:8px;padding:0;">
+          <a href="${clientUrl}/discover" style="display:inline-block;padding:13px 28px;font-family:${FONT_BAR};font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${WHITE};text-decoration:none;">Open ${APP}</a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Divider -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:16px;">
+      <tr><td style="height:1px;background:${BORDER};font-size:0;">&nbsp;</td></tr>
+    </table>
+
+    <p style="margin:0;font-family:${FONT_DM};font-size:12px;color:#aeaeb2;line-height:1.6;">
+      You received this because <strong>${sender.name}</strong> sent you a message on ${APP}.
+    </p>
+  `
+
+  await sgMail.send({
+    to:      recipient.email,
+    from:    { email: process.env.FROM_EMAIL, name: APP },
+    subject: `${sender.name} sent you a message on ${APP}`,
+    html:    baseTemplate({
+      preheader: preview ?? `${sender.name} sent you a message on ${APP}.`,
+      body,
+    }),
+  })
+}
+
+export async function sendPostNotificationEmail(follower, author, post) {
+  if (!process.env.SENDGRID_API_KEY) return
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+  const clientUrl = process.env.CLIENT_URL ?? 'https://boxingamateur.com'
+  const discoverUrl = `${clientUrl}/discover`
+  const preview = post.content
+    ? (post.content.length > 180 ? post.content.slice(0, 180).trimEnd() + '…' : post.content)
+    : null
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-family:${FONT_BAR};font-size:28px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:${NAVY};line-height:1.1;">New post</h1>
+    <p style="margin:0 0 24px;font-family:${FONT_DM};font-size:15px;color:${TEXT_2};line-height:1.65;">
+      <strong style="color:${TEXT};font-weight:600;">${author.name}</strong> just posted something new on ${APP}.
+    </p>
+
+    ${preview ? `
+    <!-- Post preview card -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:28px;">
+      <tr>
+        <td style="background:#f8f9ff;border:1px solid ${BORDER};border-left:4px solid ${RED};border-radius:8px;padding:16px 20px;">
+          <p style="margin:0;font-family:${FONT_DM};font-size:14px;color:${TEXT_2};line-height:1.7;">${preview}</p>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
+
+    <!-- CTA button -->
+    <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px;">
+      <tr>
+        <td style="background:${NAVY};border-radius:8px;padding:0;">
+          <a href="${discoverUrl}" style="display:inline-block;padding:13px 28px;font-family:${FONT_BAR};font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${WHITE};text-decoration:none;">View on ${APP}</a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Divider -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:16px;">
+      <tr><td style="height:1px;background:${BORDER};font-size:0;">&nbsp;</td></tr>
+    </table>
+
+    <p style="margin:0;font-family:${FONT_DM};font-size:12px;color:#aeaeb2;line-height:1.6;">
+      You're receiving this because you follow <strong>${author.name}</strong> on ${APP}.
+    </p>
+  `
+
+  await sgMail.send({
+    to:      follower.email,
+    from:    { email: process.env.FROM_EMAIL, name: APP },
+    subject: `${author.name} just posted on ${APP}`,
+    html:    baseTemplate({
+      preheader: `${author.name} just shared a new post on ${APP}.`,
+      body,
+    }),
+  })
 }
 
 export async function sendVerificationEmail(user, code) {

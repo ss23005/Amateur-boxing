@@ -1,4 +1,6 @@
 import Conversation from '../models/Conversation.js'
+import User from '../models/User.js'
+import { sendMessageNotificationEmail } from '../utils/email.js'
 
 export const getConversations = async (req, res) => {
   try {
@@ -87,6 +89,22 @@ export const sendMessage = async (req, res) => {
     const populated = conversation.messages.id(newMessage._id)
 
     res.status(201).json(populated)
+
+    // Non-blocking: email all recipients in this conversation
+    const recipientIds = conversation.participants.filter(
+      p => p.toString() !== req.user._id.toString()
+    )
+    if (recipientIds.length && content?.trim()) {
+      User.find({ _id: { $in: recipientIds } })
+        .select('name email')
+        .then(recipients => {
+          recipients.forEach(recipient => {
+            if (!recipient.email) return
+            sendMessageNotificationEmail(recipient, req.user, content).catch(() => {})
+          })
+        })
+        .catch(() => {})
+    }
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useFetch } from '../../hooks/useFetch'
+import { useAuth } from '../../hooks/useAuth'
 
 const ROLE_COLORS = {
   fighter: { bg: 'rgba(232,25,44,0.10)', color: '#c0101f', label: 'Fighter' },
@@ -57,8 +58,12 @@ function UserCard({ user }) {
 
 export default function Discover() {
   const { data: users, loading, error } = useFetch('/users/public')
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState('fighter')
+  const roleFilter = 'fighter'
+
+  const handleLogout = () => { logout(); navigate('/welcome') }
 
   const filtered = useMemo(() => {
     if (!users) return []
@@ -101,10 +106,25 @@ export default function Discover() {
               </button>
             )}
           </div>
-          <select className="filter-select" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
-            <option value="fighter">Fighters</option>
-            <option value="">All Members</option>
-          </select>
+          {user && (
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '9px 18px',
+                border: '1px solid var(--accent)',
+                borderRadius: 'var(--r-sm)',
+                background: '#fff',
+                color: 'var(--accent)',
+                fontSize: 14,
+                fontFamily: 'var(--sans)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Sign out
+            </button>
+          )}
         </div>
 
         {!loading && users && (

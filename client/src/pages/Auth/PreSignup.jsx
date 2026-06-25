@@ -218,6 +218,7 @@ export default function PreSignup() {
         <div className="presignup-hero-inner">
           <img src={logo} alt="Boxing Amateur" className="presignup-hero-logo" />
           <h1 className="presignup-hero-title">Boxing Amateur</h1>
+          <p className="presignup-hero-slogan">Grass roots to greatness</p>
           <p className="presignup-hero-sub">The home of amateur boxing. Track records, find gyms, and connect with fighters worldwide.</p>
           <ul className="presignup-features">
             {FEATURES.map(f => (

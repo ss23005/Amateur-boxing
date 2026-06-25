@@ -1,5 +1,7 @@
 import Post from '../models/Post.js'
+import User from '../models/User.js'
 import Notification from '../models/Notification.js'
+import { sendPostNotificationEmail } from '../utils/email.js'
 
 export const getPosts = async (req, res) => {
   try {
@@ -38,6 +40,19 @@ export const createPost = async (req, res) => {
     })
     await post.populate('author', 'name username avatar')
     res.status(201).json(post)
+
+    // Non-blocking: email all followers about the new post
+    User.findById(req.user._id)
+      .select('followers name')
+      .populate('followers', 'name email')
+      .then(author => {
+        if (!author?.followers?.length) return
+        author.followers.forEach(follower => {
+          if (!follower.email) return
+          sendPostNotificationEmail(follower, author, post).catch(() => {})
+        })
+      })
+      .catch(() => {})
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

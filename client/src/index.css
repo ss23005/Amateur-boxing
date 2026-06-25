@@ -4582,7 +4582,18 @@ main { flex: 1; background: var(--bg); }
   color: #fff;
   line-height: 1.1;
   letter-spacing: -0.5px;
-  margin: 0 0 14px;
+  margin: 0 0 10px;
+}
+
+.presignup-hero-slogan {
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #e8192c;
+  margin: 0 0 20px;
 }
 
 .presignup-hero-sub {
