@@ -12,7 +12,7 @@ function RootRedirect() {
   const { user, loading } = useAuth()
   if (loading) return null
   if (user?.role === 'superadmin') return <Navigate to="/admin" replace />
-  return <Navigate to={user ? '/discover' : '/welcome'} replace />
+  return <Navigate to={user ? '/feed' : '/welcome'} replace />
 }
 
 function timeAgoShort(date) {
@@ -233,7 +233,6 @@ function AppShell() {
         {routes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
         ))}
-        <Route path="*" element={<Navigate to="/welcome" replace />} />
       </Routes>
     )
   }
@@ -247,7 +246,6 @@ function AppShell() {
           {routes.map(({ path, element }) => (
             <Route key={path} path={path} element={element} />
           ))}
-          <Route path="*" element={<Navigate to="/welcome" replace />} />
         </Routes>
       </main>
       <MobileNav />

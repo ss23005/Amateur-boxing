@@ -20,7 +20,8 @@ const fighterSchema = new mongoose.Schema(
     location: { type: String, default: '' },
     bio: { type: String, default: '' },
     avatar: { type: String, default: '' },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    user:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    status: { type: String, enum: ['pending', 'approved'], default: 'approved' },
   },
   { timestamps: true }
 )

@@ -97,11 +97,25 @@ export default function Feed() {
     }))
   }
 
+  const isPending = user?.status === 'pending' || user?.status === 'denied'
+
   if (loading) return <div className="loading-state">Loading feed…</div>
   if (error)   return <div className="page"><div className="error-banner">{error}</div></div>
 
   return (
     <div className="feed-page">
+
+      {/* ── Pending banner ── */}
+      {isPending && (
+        <div className="pending-banner">
+          <span className="pending-banner-dot" />
+          <span>
+            {user.status === 'denied'
+              ? 'Your account needs attention — check your email for details from the team.'
+              : 'Your account is pending approval. You can browse the feed but cannot post, comment, or like until approved.'}
+          </span>
+        </div>
+      )}
 
       {/* ── Header ── */}
       <div className="feed-page-header" data-tutorial="feed-main">
@@ -109,7 +123,7 @@ export default function Feed() {
           <p className="feed-page-eyebrow">Community</p>
           <h1 className="feed-page-title">Feed</h1>
         </div>
-        {user && (
+        {user && !isPending && (
           <button className="btn btn-outline btn-sm feed-new-btn" onClick={() => setShowCreate(true)}>
             <PlusIcon /> New Post
           </button>
@@ -121,7 +135,7 @@ export default function Feed() {
         <div className="empty-state">
           <p className="empty-state-title">Nothing here yet</p>
           <p className="empty-state-desc">Be the first to share something with the community.</p>
-          {user && (
+          {user && !isPending && (
             <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setShowCreate(true)}>
               Create First Post
             </button>

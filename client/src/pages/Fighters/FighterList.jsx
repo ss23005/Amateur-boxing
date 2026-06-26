@@ -226,20 +226,21 @@ export default function FighterList() {
 
           {filtered.map((f, index) => {
             const { wins = 0, losses = 0, draws = 0 } = f.record ?? {}
-            const initial  = f.name.charAt(0).toUpperCase()
-            const rank     = index + 1
-            const location = f.location || f.user?.location || f.stats?.nationality || '—'
-            const isYou    = user && f.user && (
+            const initial    = f.name.charAt(0).toUpperCase()
+            const rank       = index + 1
+            const location   = f.location || f.user?.location || f.stats?.nationality || '—'
+            const isYou      = user && f.user && (
               f.user._id === user._id || f.user._id?.toString() === user._id?.toString()
             )
+            const isPending  = f.status === 'pending'
 
             return (
               <Link
                 key={f._id}
                 to={`/fighters/${f._id}`}
-                className={`fighter-list-row${isYou ? ' is-you' : ''}`}
+                className={`fighter-list-row${isYou ? ' is-you' : ''}${isPending ? ' fighter-pending' : ''}`}
               >
-                <span className={`fl-col-rank fl-rank-num${rank <= 3 ? ' top-three' : ''}`}>
+                <span className={`fl-col-rank fl-rank-num${rank <= 3 && !isPending ? ' top-three' : ''}`}>
                   #{rank}
                 </span>
 
@@ -248,18 +249,22 @@ export default function FighterList() {
                   <span className="fl-name-text">
                     <span className="fl-name">{f.name}</span>
                     {isYou && <span className="fl-you-tag">YOU</span>}
+                    {isPending && <span className="fl-pending-tag">Pending</span>}
                   </span>
                 </span>
 
                 <span className="fl-col-class">
-                  <span className="badge badge-blue">{f.weightClass || '—'}</span>
+                  {isPending
+                    ? <span className="badge badge-grey">Awaiting approval</span>
+                    : <span className="badge badge-blue">{f.weightClass || '—'}</span>
+                  }
                 </span>
 
-                <span className="fl-col-stat fl-stat-w">{wins}</span>
-                <span className="fl-col-stat fl-stat-l">{losses}</span>
-                <span className="fl-col-stat fl-stat-d">{draws}</span>
+                <span className="fl-col-stat fl-stat-w">{isPending ? '—' : wins}</span>
+                <span className="fl-col-stat fl-stat-l">{isPending ? '—' : losses}</span>
+                <span className="fl-col-stat fl-stat-d">{isPending ? '—' : draws}</span>
 
-                <span className="fl-col-location fl-location">{location}</span>
+                <span className="fl-col-location fl-location">{isPending ? '—' : location}</span>
               </Link>
             )
           })}

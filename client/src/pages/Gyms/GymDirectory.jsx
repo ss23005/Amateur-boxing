@@ -132,14 +132,18 @@ export default function GymDirectory() {
       {sorted.length > 0 && (
         <div className="gym-grid">
           {sorted.map(gym => {
-            const isNearby = userCity && gym.city.toLowerCase().includes(userCity)
+            const isNearby  = userCity && gym.city.toLowerCase().includes(userCity)
+            const isPending = gym.status === 'pending'
             return (
               <div
                 key={gym._id}
                 ref={el => { cardRefs.current[gym._id] = el }}
-                className={`gym-card${isNearby ? ' gym-card--nearby' : ''}${selectedId === gym._id ? ' gym-card--selected' : ''}`}
+                className={`gym-card${isNearby ? ' gym-card--nearby' : ''}${selectedId === gym._id ? ' gym-card--selected' : ''}${isPending ? ' gym-card--pending' : ''}`}
                 onClick={() => setSelectedId(gym._id)}
               >
+                {isPending && (
+                  <div className="gym-pending-badge">Pending Approval</div>
+                )}
                 <div className="gym-card-header">
                   <div className="gym-card-avatar">
                     {gym.name.charAt(0).toUpperCase()}
@@ -150,7 +154,7 @@ export default function GymDirectory() {
                       {gym.city}{gym.country ? `, ${gym.country}` : ''}
                     </p>
                   </div>
-                  {isNearby && <span className="gym-nearby-badge">Near You</span>}
+                  {isNearby && !isPending && <span className="gym-nearby-badge">Near You</span>}
                 </div>
 
                 {gym.address && (

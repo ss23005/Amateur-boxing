@@ -1,5 +1,5 @@
 import { useState, useContext, useRef } from 'react'
-import { useNavigate, Link, Navigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { TutorialContext } from '../../context/TutorialContext'
 import api from '../../services/api'
@@ -43,11 +43,9 @@ const FEATURES = [
 ]
 
 export default function PreSignup() {
-  const { register, user, loading: authLoading } = useAuth()
+  const { register } = useAuth()
   const navigate = useNavigate()
   const tutorial = useContext(TutorialContext)
-
-  if (!authLoading && user) return <Navigate to="/discover" replace />
 
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
@@ -56,6 +54,7 @@ export default function PreSignup() {
     gender: '', weightClass: '', wins: '', losses: '', draws: '',
     location: '', gym: '', age: '',
     gymCity: '', gymPhone: '', gymWebsite: '', gymDescription: '',
+    source: 'presignup',
   })
   const [gymStatus, setGymStatus] = useState(null)
   const [error, setError] = useState('')

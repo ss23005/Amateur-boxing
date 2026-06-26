@@ -4,7 +4,12 @@ import { geocodeGym } from '../utils/geocode.js'
 
 export const getGyms = async (req, res) => {
   try {
-    const gyms = await Gym.find().sort({ city: 1, name: 1 })
+    const userId = req.user?._id
+    // Show approved gyms to everyone; show a user's own pending gym only to them
+    const query = userId
+      ? { $or: [{ status: { $ne: 'pending' } }, { status: 'pending', createdBy: userId }] }
+      : { status: { $ne: 'pending' } }
+    const gyms = await Gym.find(query).sort({ city: 1, name: 1 })
     res.json(gyms)
   } catch (err) {
     res.status(500).json({ message: err.message })

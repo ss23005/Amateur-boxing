@@ -4,14 +4,14 @@ import User from '../models/User.js'
 import Fighter from '../models/Fighter.js'
 import Gym from '../models/Gym.js'
 import { geocodeGym } from '../utils/geocode.js'
-import { sendVerificationEmail } from '../utils/email.js'
+import { sendVerificationEmail, sendSystemVerificationEmail } from '../utils/email.js'
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
 export const register = async (req, res) => {
   const { name, username, email, password, role, gender, weightClass, wins, losses, draws, location, gym, age,
-          gymCity, gymPhone, gymWebsite, gymDescription } = req.body
+          gymCity, gymPhone, gymWebsite, gymDescription, source } = req.body
   try {
     const exists = await User.findOne({ email })
     if (exists) return res.status(400).json({ message: 'Email already in use' })
@@ -35,6 +35,7 @@ export const register = async (req, res) => {
 
     // For coaches: find existing gym by name (case-insensitive) or create a new one
     let gymId = null
+    let newGymId = null  // track newly created gyms so we can set createdBy after user creation
     if (role === 'coach' && gym) {
       const escaped = gym.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       let gymDoc = await Gym.findOne({ name: { $regex: new RegExp(`^${escaped}$`, 'i') } })
@@ -49,8 +50,10 @@ export const register = async (req, res) => {
         const coords = await geocodeGym(gymData)
         gymDoc = await Gym.create({
           ...gymData,
+          status: 'pending',
           ...(coords ? { coordinates: coords } : {}),
         })
+        newGymId = gymDoc._id
       }
       gymId = gymDoc._id
     }
@@ -65,10 +68,16 @@ export const register = async (req, res) => {
       password,
       role,
       gymId,
+      status: (role === 'fighter' || role === 'coach') ? 'pending' : 'approved',
       emailVerificationToken:   verificationToken,
       emailVerificationExpires: verificationExpires,
       ...fighterFields,
     })
+
+    // Link newly created gym to this user
+    if (newGymId) {
+      await Gym.findByIdAndUpdate(newGymId, { createdBy: user._id })
+    }
 
     // Auto-create Fighter document so the user appears on the leaderboard immediately
     if (role === 'fighter') {
@@ -83,13 +92,15 @@ export const register = async (req, res) => {
         stats: {
           age: user.age || undefined,
         },
-        bio:  '',
-        user: user._id,
+        bio:    '',
+        user:   user._id,
+        status: 'pending',
       })
     }
 
     // Fire verification email (non-blocking — don't fail registration if email fails)
-    sendVerificationEmail(user, verificationToken)
+    const sendEmail = source === 'presignup' ? sendVerificationEmail : sendSystemVerificationEmail
+    sendEmail(user, verificationToken)
       .then(() => console.log(`✓ Verification email sent to ${user.email}`))
       .catch(err => {
         console.error('Verification email failed:', err.message)
@@ -102,6 +113,7 @@ export const register = async (req, res) => {
       username:      user.username,
       email:         user.email,
       role:          user.role,
+      status:        user.status,
       emailVerified: user.emailVerified,
       token:         generateToken(user._id),
     })
@@ -149,6 +161,7 @@ export const login = async (req, res) => {
       username: user.username,
       email:    user.email,
       role:     user.role,
+      status:   user.status,
       token:    generateToken(user._id),
     })
   } catch (err) {
@@ -194,7 +207,7 @@ export const resendVerification = async (req, res) => {
     user.emailVerificationExpires = expires
     await user.save()
 
-    await sendVerificationEmail(user, token)
+    await sendSystemVerificationEmail(user, token)
     res.json({ message: 'Verification email sent' })
   } catch (err) {
     res.status(500).json({ message: err.message })

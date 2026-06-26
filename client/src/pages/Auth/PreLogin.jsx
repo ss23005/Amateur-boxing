@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link, Navigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import logo from '../../assets/logo.svg'
 
@@ -11,13 +11,11 @@ const FEATURES = [
 ]
 
 export default function PreLogin() {
-  const { login, user, loading: authLoading } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  if (!authLoading && user) return <Navigate to="/discover" replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -25,7 +23,7 @@ export default function PreLogin() {
     setLoading(true)
     try {
       const data = await login(form.email, form.password)
-      navigate(data.role === 'superadmin' ? '/admin' : '/discover')
+      navigate(data.role === 'superadmin' ? '/admin' : '/feed')
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Check your credentials.')
     } finally {

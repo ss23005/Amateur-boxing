@@ -503,6 +503,314 @@ function RequestsTab() {
 
 // ── Gyms Tab ──────────────────────────────────────────────────────────────────
 
+function IconPending() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+  )
+}
+
+// ── Pending Approvals Tab ─────────────────────────────────────────────────────
+
+function PendingTab() {
+  const [users, setUsers]       = useState([])
+  const [gyms,  setGyms]        = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [actioning, setActioning] = useState(null)
+  const [denyTarget, setDenyTarget] = useState(null)
+  const [denyMsg,    setDenyMsg]    = useState('')
+  const [denyEdits,  setDenyEdits]  = useState({})
+
+  const load = useCallback(() => {
+    setLoading(true)
+    Promise.all([
+      api.get('/admin/pending/users'),
+      api.get('/admin/pending/gyms'),
+    ]).then(([uRes, gRes]) => {
+      setUsers(uRes.data)
+      setGyms(gRes.data)
+    }).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const handleApproveUser = async (id) => {
+    setActioning(id)
+    try {
+      await api.put(`/admin/pending/users/${id}/approve`)
+      setUsers(prev => prev.filter(u => u._id !== id))
+    } catch {} finally { setActioning(null) }
+  }
+
+  const handleApproveGym = async (id) => {
+    setActioning(id)
+    try {
+      await api.put(`/admin/pending/gyms/${id}/approve`)
+      setGyms(prev => prev.filter(g => g._id !== id))
+    } catch {} finally { setActioning(null) }
+  }
+
+  const openDeny = (type, item) => {
+    setDenyTarget({ type, item })
+    setDenyMsg('')
+    if (type === 'user' && item.role === 'fighter') {
+      setDenyEdits({
+        weightClass: item.weightClass || '',
+        location:    item.location    || '',
+        wins:        item.record?.wins   ?? 0,
+        losses:      item.record?.losses ?? 0,
+        draws:       item.record?.draws  ?? 0,
+      })
+    } else if (type === 'gym') {
+      setDenyEdits({ name: item.name || '', city: item.city || '', country: item.country || '' })
+    } else {
+      setDenyEdits({})
+    }
+  }
+
+  const handleDenySubmit = async () => {
+    if (!denyTarget || !denyMsg.trim()) return
+    setActioning(denyTarget.item._id)
+    try {
+      const url = denyTarget.type === 'user'
+        ? `/admin/pending/users/${denyTarget.item._id}/deny`
+        : `/admin/pending/gyms/${denyTarget.item._id}/deny`
+      await api.put(url, { message: denyMsg, ...denyEdits })
+      if (denyTarget.type === 'user') setUsers(prev => prev.filter(u => u._id !== denyTarget.item._id))
+      else setGyms(prev => prev.filter(g => g._id !== denyTarget.item._id))
+      setDenyTarget(null)
+    } catch {} finally { setActioning(null) }
+  }
+
+  const fighters = users.filter(u => u.role === 'fighter')
+  const coaches  = users.filter(u => u.role === 'coach')
+  const total    = users.length + gyms.length
+
+  if (loading) return <div className="adm-loading">Loading pending approvals…</div>
+
+  return (
+    <div className="adm-pending">
+      <h2 className="adm-section-title">
+        Pending Approvals <span className="adm-count">({total})</span>
+      </h2>
+
+      {total === 0 && <div className="adm-empty-state">Nothing waiting for approval.</div>}
+
+      {/* ── Fighters ── */}
+      {fighters.length > 0 && (
+        <>
+          <h3 className="adm-section-subtitle">Fighters ({fighters.length})</h3>
+          {fighters.map(u => (
+            <div key={u._id} className="adm-pending-card">
+              <div className="adm-pending-info">
+                <div className="adm-pending-avatar">{u.name.charAt(0).toUpperCase()}</div>
+                <div>
+                  <p className="adm-pending-name">{u.name}</p>
+                  <p className="adm-pending-meta">{u.email}</p>
+                  <p className="adm-pending-meta">
+                    {u.weightClass || '—'} · {u.gender === 'male' ? "Men's" : u.gender === 'female' ? "Women's" : '—'} ·{' '}
+                    {u.record?.wins ?? 0}W {u.record?.losses ?? 0}L {u.record?.draws ?? 0}D ·{' '}
+                    Age {u.age ?? '—'} · {u.location || '—'} · {u.gym || '—'}
+                  </p>
+                  <p className="adm-pending-meta">
+                    Joined {new Date(u.createdAt).toLocaleDateString()}
+                    {u.status === 'denied' && <span style={{ color: '#e8192c', marginLeft: 8 }}>Previously denied</span>}
+                  </p>
+                </div>
+              </div>
+              <div className="adm-pending-actions">
+                <button className="btn btn-primary adm-btn-sm"
+                  disabled={actioning === u._id}
+                  onClick={() => handleApproveUser(u._id)}>
+                  Approve
+                </button>
+                <button className="adm-btn-deny adm-btn-sm"
+                  disabled={actioning === u._id}
+                  onClick={() => openDeny('user', u)}>
+                  Deny / Edit
+                </button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* ── Coaches ── */}
+      {coaches.length > 0 && (
+        <>
+          <h3 className="adm-section-subtitle">Coaches ({coaches.length})</h3>
+          {coaches.map(u => (
+            <div key={u._id} className="adm-pending-card">
+              <div className="adm-pending-info">
+                <div className="adm-pending-avatar">{u.name.charAt(0).toUpperCase()}</div>
+                <div>
+                  <p className="adm-pending-name">{u.name}</p>
+                  <p className="adm-pending-meta">{u.email}</p>
+                  <p className="adm-pending-meta">{u.gym || 'No gym specified'} · {u.location || '—'}</p>
+                  <p className="adm-pending-meta">
+                    Joined {new Date(u.createdAt).toLocaleDateString()}
+                    {u.status === 'denied' && <span style={{ color: '#e8192c', marginLeft: 8 }}>Previously denied</span>}
+                  </p>
+                </div>
+              </div>
+              <div className="adm-pending-actions">
+                <button className="btn btn-primary adm-btn-sm"
+                  disabled={actioning === u._id}
+                  onClick={() => handleApproveUser(u._id)}>
+                  Approve
+                </button>
+                <button className="adm-btn-deny adm-btn-sm"
+                  disabled={actioning === u._id}
+                  onClick={() => openDeny('user', u)}>
+                  Deny
+                </button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* ── Pending Gyms ── */}
+      {gyms.length > 0 && (
+        <>
+          <h3 className="adm-section-subtitle">New Gyms ({gyms.length})</h3>
+          {gyms.map(gym => (
+            <div key={gym._id} className="adm-pending-card">
+              <div className="adm-pending-info">
+                <div className="adm-pending-avatar adm-pending-avatar--gym">G</div>
+                <div>
+                  <p className="adm-pending-name">{gym.name}</p>
+                  <p className="adm-pending-meta">{gym.city}{gym.country ? `, ${gym.country}` : ''}</p>
+                  {gym.description && <p className="adm-pending-meta">{gym.description}</p>}
+                  {gym.createdBy && (
+                    <p className="adm-pending-meta">
+                      Added by: {gym.createdBy.name} ({gym.createdBy.email})
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="adm-pending-actions">
+                <button className="btn btn-primary adm-btn-sm"
+                  disabled={actioning === gym._id}
+                  onClick={() => handleApproveGym(gym._id)}>
+                  Approve
+                </button>
+                <button className="adm-btn-deny adm-btn-sm"
+                  disabled={actioning === gym._id}
+                  onClick={() => openDeny('gym', gym)}>
+                  Deny / Edit
+                </button>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* ── Deny / Edit modal ── */}
+      {denyTarget && (
+        <div className="adm-modal-overlay" onClick={() => setDenyTarget(null)}>
+          <div className="adm-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="adm-modal-title">
+              {denyTarget.type === 'gym'
+                ? `Deny / Edit — ${denyTarget.item.name}`
+                : `Deny — ${denyTarget.item.name}`}
+            </h3>
+
+            {/* Fighter profile edits */}
+            {denyTarget.type === 'user' && denyTarget.item.role === 'fighter' && (
+              <div className="adm-deny-edits">
+                <p className="adm-deny-edits-label">Optionally correct their profile before denying:</p>
+                <div className="adm-form-row">
+                  <div className="adm-form-group">
+                    <label>Weight Class</label>
+                    <input className="input" value={denyEdits.weightClass || ''}
+                      onChange={e => setDenyEdits(p => ({ ...p, weightClass: e.target.value }))} />
+                  </div>
+                  <div className="adm-form-group">
+                    <label>Location</label>
+                    <input className="input" value={denyEdits.location || ''}
+                      onChange={e => setDenyEdits(p => ({ ...p, location: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="adm-form-row">
+                  <div className="adm-form-group">
+                    <label>Wins</label>
+                    <input className="input" type="number" min="0" value={denyEdits.wins ?? 0}
+                      onChange={e => setDenyEdits(p => ({ ...p, wins: e.target.value }))} />
+                  </div>
+                  <div className="adm-form-group">
+                    <label>Losses</label>
+                    <input className="input" type="number" min="0" value={denyEdits.losses ?? 0}
+                      onChange={e => setDenyEdits(p => ({ ...p, losses: e.target.value }))} />
+                  </div>
+                  <div className="adm-form-group">
+                    <label>Draws</label>
+                    <input className="input" type="number" min="0" value={denyEdits.draws ?? 0}
+                      onChange={e => setDenyEdits(p => ({ ...p, draws: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Gym edits */}
+            {denyTarget.type === 'gym' && (
+              <div className="adm-deny-edits">
+                <p className="adm-deny-edits-label">Optionally correct gym details:</p>
+                <div className="adm-form-row">
+                  <div className="adm-form-group adm-form-group--full">
+                    <label>Gym Name</label>
+                    <input className="input" value={denyEdits.name || ''}
+                      onChange={e => setDenyEdits(p => ({ ...p, name: e.target.value }))} />
+                  </div>
+                </div>
+                <div className="adm-form-row">
+                  <div className="adm-form-group">
+                    <label>City</label>
+                    <input className="input" value={denyEdits.city || ''}
+                      onChange={e => setDenyEdits(p => ({ ...p, city: e.target.value }))} />
+                  </div>
+                  <div className="adm-form-group">
+                    <label>Country</label>
+                    <input className="input" value={denyEdits.country || ''}
+                      onChange={e => setDenyEdits(p => ({ ...p, country: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="adm-form-group" style={{ marginTop: 16 }}>
+              <label>
+                Message to send them&nbsp;
+                <span style={{ fontWeight: 400, color: '#888' }}>(required)</span>
+              </label>
+              <textarea className="input adm-textarea" rows={4} value={denyMsg}
+                onChange={e => setDenyMsg(e.target.value)}
+                placeholder="Explain what needs to be changed or why the application was denied…" />
+            </div>
+
+            <div className="adm-modal-actions">
+              <button
+                className="adm-btn-deny"
+                disabled={!denyMsg.trim() || actioning === denyTarget.item._id}
+                onClick={handleDenySubmit}
+                style={{ padding: '9px 20px', borderRadius: 6, fontSize: '0.875rem' }}
+              >
+                {actioning === denyTarget.item._id ? 'Sending…' : 'Send & Deny'}
+              </button>
+              <button className="btn btn-outline" onClick={() => setDenyTarget(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function IconGym() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
@@ -771,11 +1079,12 @@ function GymsTab() {
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 
 const TABS = [
-  { key: 'overview',  label: 'Overview',       Icon: IconChart },
-  { key: 'upload',    label: 'Upload Content',  Icon: IconUpload },
-  { key: 'users',     label: 'Users',           Icon: IconUsers },
-  { key: 'requests',  label: 'Requests',        Icon: IconRequests },
-  { key: 'gyms',      label: 'Gyms',            Icon: IconGym },
+  { key: 'overview',  label: 'Overview',          Icon: IconChart },
+  { key: 'pending',   label: 'Pending Approvals', Icon: IconPending },
+  { key: 'upload',    label: 'Upload Content',     Icon: IconUpload },
+  { key: 'users',     label: 'Users',              Icon: IconUsers },
+  { key: 'requests',  label: 'Requests',           Icon: IconRequests },
+  { key: 'gyms',      label: 'Gyms',               Icon: IconGym },
 ]
 
 export default function AdminDashboard() {
@@ -821,6 +1130,7 @@ export default function AdminDashboard() {
         {/* ── Content ── */}
         <main className="adm-content">
           {tab === 'overview'  && <OverviewTab />}
+          {tab === 'pending'   && <PendingTab />}
           {tab === 'upload'    && <UploadTab />}
           {tab === 'users'     && <UsersTab />}
           {tab === 'requests'  && <RequestsTab />}

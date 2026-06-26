@@ -5408,3 +5408,200 @@ main { flex: 1; background: var(--bg); }
   .fp2-name { font-size: 2rem; }
 }
 
+/* ── Pending approval states ──────────────────────────────────────────────── */
+
+.pending-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 0.875rem;
+  color: #78350f;
+  line-height: 1.5;
+}
+.pending-banner-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+.fighter-list-row.fighter-pending {
+  opacity: 0.5;
+  pointer-events: auto;
+}
+.fl-pending-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.badge.badge-grey {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Gym directory pending card */
+.gym-card--pending {
+  opacity: 0.55;
+  border-style: dashed;
+  position: relative;
+}
+.gym-pending-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-bottom: 6px;
+}
+
+/* ── Admin pending tab ────────────────────────────────────────────────────── */
+
+.adm-pending { padding: 0; }
+
+.adm-section-subtitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary, #888);
+  margin: 24px 0 12px;
+}
+
+.adm-pending-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+}
+.adm-pending-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+.adm-pending-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary, #0a2463);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.adm-pending-avatar--gym {
+  background: var(--accent, #e8192c);
+  border-radius: 8px;
+}
+.adm-pending-name {
+  margin: 0 0 2px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary, #111);
+}
+.adm-pending-meta {
+  margin: 0 0 2px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #666);
+  line-height: 1.5;
+}
+.adm-pending-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.adm-btn-deny {
+  background: #fff;
+  color: var(--accent, #e8192c);
+  border: 1px solid var(--accent, #e8192c);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.adm-btn-deny:hover { background: #fff5f5; }
+.adm-btn-deny:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Admin modal */
+.adm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.adm-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.adm-modal-title {
+  margin: 0 0 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary, #111);
+}
+.adm-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.adm-deny-edits {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 4px;
+}
+.adm-deny-edits-label {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #666);
+  font-weight: 600;
+}
+
