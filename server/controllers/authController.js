@@ -4,14 +4,16 @@ import User from '../models/User.js'
 import Fighter from '../models/Fighter.js'
 import Gym from '../models/Gym.js'
 import { geocodeGym } from '../utils/geocode.js'
-import { sendVerificationEmail } from '../utils/email.js'
+import { sendVerificationEmail, sendSystemVerificationEmail } from '../utils/email.js'
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' })
 
 export const register = async (req, res) => {
-  const { name, username, email, password, role, gender, weightClass, wins, losses, draws, location, gym, age,
-          gymCity, gymPhone, gymWebsite, gymDescription } = req.body
+  const {
+    name, username, email, password, role, gender, weightClass, wins, losses, draws,
+    location, gym, age, gymCity, gymPhone, gymWebsite, gymDescription, source,
+  } = req.body
   try {
     const exists = await User.findOne({ email })
     if (exists) return res.status(400).json({ message: 'Email already in use' })
@@ -33,8 +35,9 @@ export const register = async (req, res) => {
       age:      age ? Number(age) : undefined,
     } : {}
 
-    // For coaches: find existing gym by name (case-insensitive) or create a new one
-    let gymId = null
+    // For coaches: find existing gym by name (case-insensitive) or create a new pending one
+    let gymId    = null
+    let newGymId = null
     if (role === 'coach' && gym) {
       const escaped = gym.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       let gymDoc = await Gym.findOne({ name: { $regex: new RegExp(`^${escaped}$`, 'i') } })
@@ -49,14 +52,19 @@ export const register = async (req, res) => {
         const coords = await geocodeGym(gymData)
         gymDoc = await Gym.create({
           ...gymData,
+          status: 'pending',
           ...(coords ? { coordinates: coords } : {}),
         })
+        newGymId = gymDoc._id
       }
       gymId = gymDoc._id
     }
 
-    const verificationToken   = crypto.randomInt(100000, 1000000).toString() // 6-digit code
-    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000) // 15 min
+    const verificationToken   = crypto.randomInt(100000, 1000000).toString()
+    const verificationExpires = new Date(Date.now() + 15 * 60 * 1000)
+
+    // Fighters and coaches start pending; everyone else is approved immediately
+    const userStatus = (role === 'fighter' || role === 'coach') ? 'pending' : 'approved'
 
     const user = await User.create({
       name,
@@ -65,31 +73,36 @@ export const register = async (req, res) => {
       password,
       role,
       gymId,
+      status: userStatus,
       emailVerificationToken:   verificationToken,
       emailVerificationExpires: verificationExpires,
       ...fighterFields,
     })
 
-    // Auto-create Fighter document so the user appears on the leaderboard immediately
+    // Now that we have user._id, link the newly created gym to this coach
+    if (newGymId) {
+      await Gym.findByIdAndUpdate(newGymId, { createdBy: user._id })
+    }
+
     if (role === 'fighter') {
       await Fighter.create({
-        name: user.username || user.name,
+        name:       user.username || user.name,
         weightClass: user.weightClass || '',
         record: {
           wins:   user.record?.wins   ?? 0,
           losses: user.record?.losses ?? 0,
           draws:  user.record?.draws  ?? 0,
         },
-        stats: {
-          age: user.age || undefined,
-        },
-        bio:  '',
-        user: user._id,
+        stats: { age: user.age || undefined },
+        bio:    '',
+        user:   user._id,
+        status: 'pending',
       })
     }
 
-    // Fire verification email (non-blocking — don't fail registration if email fails)
-    sendVerificationEmail(user, verificationToken)
+    // Route email template based on where the user signed up from
+    const sendEmail = source === 'presignup' ? sendVerificationEmail : sendSystemVerificationEmail
+    sendEmail(user, verificationToken)
       .then(() => console.log(`✓ Verification email sent to ${user.email}`))
       .catch(err => {
         console.error('Verification email failed:', err.message)
@@ -102,6 +115,7 @@ export const register = async (req, res) => {
       username:      user.username,
       email:         user.email,
       role:          user.role,
+      status:        user.status,
       emailVerified: user.emailVerified,
       token:         generateToken(user._id),
     })
@@ -149,6 +163,7 @@ export const login = async (req, res) => {
       username: user.username,
       email:    user.email,
       role:     user.role,
+      status:   user.status,
       token:    generateToken(user._id),
     })
   } catch (err) {
@@ -194,7 +209,7 @@ export const resendVerification = async (req, res) => {
     user.emailVerificationExpires = expires
     await user.save()
 
-    await sendVerificationEmail(user, token)
+    await sendSystemVerificationEmail(user, token)
     res.json({ message: 'Verification email sent' })
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -223,17 +238,16 @@ export const updateMe = async (req, res) => {
       { new: true, runValidators: true }
     ).select('-password')
 
-    // Keep Fighter document in sync
     if (user.role === 'fighter') {
       const fighterUpdates = {}
-      if (name        !== undefined) fighterUpdates.name        = name
-      if (weightClass !== undefined) fighterUpdates.weightClass = weightClass
-      if (location    !== undefined) fighterUpdates.location    = location
-      if (wins        !== undefined) fighterUpdates['record.wins']   = Number(wins)   || 0
-      if (losses      !== undefined) fighterUpdates['record.losses'] = Number(losses) || 0
-      if (draws       !== undefined) fighterUpdates['record.draws']  = Number(draws)  || 0
-      if (stance      !== undefined) fighterUpdates['stats.stance']  = stance
-      if (age         !== undefined) fighterUpdates['stats.age']     = age ? Number(age) : undefined
+      if (name        !== undefined) fighterUpdates.name              = name
+      if (weightClass !== undefined) fighterUpdates.weightClass       = weightClass
+      if (location    !== undefined) fighterUpdates.location          = location
+      if (wins        !== undefined) fighterUpdates['record.wins']    = Number(wins)   || 0
+      if (losses      !== undefined) fighterUpdates['record.losses']  = Number(losses) || 0
+      if (draws       !== undefined) fighterUpdates['record.draws']   = Number(draws)  || 0
+      if (stance      !== undefined) fighterUpdates['stats.stance']   = stance
+      if (age         !== undefined) fighterUpdates['stats.age']      = age ? Number(age) : undefined
 
       await Fighter.findOneAndUpdate(
         { user: user._id },

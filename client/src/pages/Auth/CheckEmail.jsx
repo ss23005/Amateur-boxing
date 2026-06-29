@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import logo from '../../assets/logo.svg'
 
@@ -154,9 +154,6 @@ export default function CheckEmail() {
             </button>
           </div>
 
-          <p className="auth-footer" style={{ marginTop: 24 }}>
-            <Link to="/discover">Skip for now →</Link>
-          </p>
         </div>
       </div>
     </div>

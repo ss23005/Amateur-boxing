@@ -14,6 +14,8 @@ const gymSchema = new mongoose.Schema(
       lat: { type: Number, default: null },
       lng: { type: Number, default: null },
     },
+    status:    { type: String, enum: ['pending', 'approved', 'denied'], default: 'approved' },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true }
 )

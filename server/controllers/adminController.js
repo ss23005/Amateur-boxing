@@ -6,6 +6,12 @@ import News from '../models/News.js'
 import FighterChangeRequest from '../models/FighterChangeRequest.js'
 import Gym from '../models/Gym.js'
 import { geocodeGym } from '../utils/geocode.js'
+import {
+  sendApprovalEmail,
+  sendDenialEmail,
+  sendGymApprovalEmail,
+  sendGymDenialEmail,
+} from '../utils/email.js'
 
 // ── Analytics ──────────────────────────────────────────────────────────────
 export const getAnalytics = async (req, res) => {
@@ -28,7 +34,6 @@ export const getAnalytics = async (req, res) => {
         .select('content media likes comments createdAt'),
     ])
 
-    // Total likes and comments across all posts
     const postAggs = await Post.aggregate([
       {
         $group: {
@@ -40,7 +45,6 @@ export const getAnalytics = async (req, res) => {
     ])
     const { totalLikes = 0, totalComments = 0 } = postAggs[0] ?? {}
 
-    // Signups per day for last 30 days
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     const signupsByDay = await User.aggregate([
       { $match: { createdAt: { $gte: thirtyDaysAgo } } },
@@ -99,7 +103,6 @@ export const reviewChangeRequest = async (req, res) => {
     await request.save()
 
     if (status === 'approved') {
-      // Build a flat update object from the stored changes
       const fighterSet = {}
       const userSet    = {}
       for (const [field, { to }] of Object.entries(request.changes)) {
@@ -159,7 +162,14 @@ export const createNews = async (req, res) => {
 
 export const updateNews = async (req, res) => {
   try {
-    const article = await News.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+    const { title, body, image, published } = req.body
+    const update = {}
+    if (title     !== undefined) update.title     = title
+    if (body      !== undefined) update.body      = body
+    if (image     !== undefined) update.image     = image
+    if (published !== undefined) update.published = published
+
+    const article = await News.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true })
     if (!article) return res.status(404).json({ message: 'Article not found' })
     res.json(article)
   } catch (err) {
@@ -180,7 +190,8 @@ export const deleteNews = async (req, res) => {
 // ── Events (admin full CRUD) ───────────────────────────────────────────────
 export const adminCreateEvent = async (req, res) => {
   try {
-    const event = await Event.create({ ...req.body, promoter: req.user._id })
+    const { title, date, venue, description, poster, status, bouts } = req.body
+    const event = await Event.create({ title, date, venue, description, poster, status, bouts, promoter: req.user._id })
     res.status(201).json(event)
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -189,7 +200,17 @@ export const adminCreateEvent = async (req, res) => {
 
 export const adminUpdateEvent = async (req, res) => {
   try {
-    const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    const { title, date, venue, description, poster, status, bouts } = req.body
+    const update = {}
+    if (title       !== undefined) update.title       = title
+    if (date        !== undefined) update.date        = date
+    if (venue       !== undefined) update.venue       = venue
+    if (description !== undefined) update.description = description
+    if (poster      !== undefined) update.poster      = poster
+    if (status      !== undefined) update.status      = status
+    if (bouts       !== undefined) update.bouts       = bouts
+
+    const event = await Event.findByIdAndUpdate(req.params.id, update, { new: true })
     if (!event) return res.status(404).json({ message: 'Event not found' })
     res.json(event)
   } catch (err) {
@@ -250,9 +271,11 @@ export const adminGetGyms = async (req, res) => {
 
 export const adminCreateGym = async (req, res) => {
   try {
-    const coords = await geocodeGym(req.body)
+    const { name, address, city, country, phone, website, email, description } = req.body
+    const gymData = { name, address, city, country, phone, website, email, description }
+    const coords = await geocodeGym(gymData)
     const gym = await Gym.create({
-      ...req.body,
+      ...gymData,
       ...(coords ? { coordinates: coords } : {}),
     })
     res.status(201).json(gym)
@@ -263,11 +286,19 @@ export const adminCreateGym = async (req, res) => {
 
 export const adminUpdateGym = async (req, res) => {
   try {
-    const coords = await geocodeGym(req.body)
-    const update = {
-      ...req.body,
-      ...(coords ? { coordinates: coords } : {}),
-    }
+    const { name, address, city, country, phone, website, email, description } = req.body
+    const gymData = {}
+    if (name        !== undefined) gymData.name        = name
+    if (address     !== undefined) gymData.address     = address
+    if (city        !== undefined) gymData.city        = city
+    if (country     !== undefined) gymData.country     = country
+    if (phone       !== undefined) gymData.phone       = phone
+    if (website     !== undefined) gymData.website     = website
+    if (email       !== undefined) gymData.email       = email
+    if (description !== undefined) gymData.description = description
+
+    const coords = await geocodeGym(gymData)
+    const update = { ...gymData, ...(coords ? { coordinates: coords } : {}) }
     const gym = await Gym.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true })
     if (!gym) return res.status(404).json({ message: 'Gym not found' })
     res.json(gym)
@@ -281,6 +312,115 @@ export const adminDeleteGym = async (req, res) => {
     const gym = await Gym.findByIdAndDelete(req.params.id)
     if (!gym) return res.status(404).json({ message: 'Gym not found' })
     res.json({ message: 'Gym deleted' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+// ── Pending approvals ──────────────────────────────────────────────────────
+export const getPendingUsers = async (req, res) => {
+  try {
+    const users = await User.find({
+      status: { $in: ['pending', 'denied'] },
+      role:   { $in: ['fighter', 'coach'] },
+    })
+      .sort({ createdAt: -1 })
+      .select('-password')
+    res.json(users)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const approveUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: { status: 'approved' } },
+      { new: true }
+    ).select('-password')
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    if (user.role === 'fighter') {
+      await Fighter.findOneAndUpdate({ user: user._id }, { $set: { status: 'approved' } })
+    }
+
+    sendApprovalEmail(user).catch(() => {})
+    res.json(user)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const denyUser = async (req, res) => {
+  try {
+    const { message, weightClass, location, age } = req.body
+    const updates = { status: 'denied' }
+    if (weightClass !== undefined) updates.weightClass = weightClass
+    if (location    !== undefined) updates.location    = location
+    if (age         !== undefined) updates.age         = age ? Number(age) : undefined
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true }
+    ).select('-password')
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    if (user.role === 'fighter') {
+      const fighterUpdates = {}
+      if (weightClass !== undefined) fighterUpdates.weightClass     = weightClass
+      if (location    !== undefined) fighterUpdates.location        = location
+      if (age         !== undefined) fighterUpdates['stats.age']    = age ? Number(age) : undefined
+      await Fighter.findOneAndUpdate({ user: user._id }, { $set: fighterUpdates })
+    }
+
+    sendDenialEmail(user, message ?? '').catch(() => {})
+    res.json(user)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const getPendingGyms = async (req, res) => {
+  try {
+    const gyms = await Gym.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .populate('createdBy', 'name email')
+    res.json(gyms)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const approveGym = async (req, res) => {
+  try {
+    const gym = await Gym.findByIdAndUpdate(
+      req.params.id,
+      { $set: { status: 'approved' } },
+      { new: true }
+    ).populate('createdBy', 'name email')
+    if (!gym) return res.status(404).json({ message: 'Gym not found' })
+
+    if (gym.createdBy) sendGymApprovalEmail(gym.createdBy, gym).catch(() => {})
+    res.json(gym)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const denyGym = async (req, res) => {
+  try {
+    const { message } = req.body
+    const gym = await Gym.findByIdAndUpdate(
+      req.params.id,
+      { $set: { status: 'denied' } },
+      { new: true }
+    ).populate('createdBy', 'name email')
+    if (!gym) return res.status(404).json({ message: 'Gym not found' })
+
+    if (gym.createdBy) sendGymDenialEmail(gym.createdBy, gym, message ?? '').catch(() => {})
+    res.json(gym)
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

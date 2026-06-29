@@ -18,6 +18,12 @@ import {
   adminCreateGym,
   adminUpdateGym,
   adminDeleteGym,
+  getPendingUsers,
+  approveUser,
+  denyUser,
+  getPendingGyms,
+  approveGym,
+  denyGym,
 } from '../controllers/adminController.js'
 
 const router = express.Router()
@@ -37,7 +43,7 @@ router.delete('/news/:id',                  deleteNews)
 
 router.post('/events',                      adminCreateEvent)
 router.put('/events/:id',                   adminUpdateEvent)
-router.delete('/events/:id',               adminDeleteEvent)
+router.delete('/events/:id',                adminDeleteEvent)
 
 router.get('/users',                        getUsers)
 router.put('/users/:id/role',               updateUserRole)
@@ -46,5 +52,13 @@ router.get('/gyms',                         adminGetGyms)
 router.post('/gyms',                        adminCreateGym)
 router.put('/gyms/:id',                     adminUpdateGym)
 router.delete('/gyms/:id',                  adminDeleteGym)
+
+// Pending approvals
+router.get('/pending/users',               getPendingUsers)
+router.put('/pending/users/:id/approve',   approveUser)
+router.put('/pending/users/:id/deny',      denyUser)
+router.get('/pending/gyms',               getPendingGyms)
+router.put('/pending/gyms/:id/approve',   approveGym)
+router.put('/pending/gyms/:id/deny',      denyGym)
 
 export default router

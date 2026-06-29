@@ -5,7 +5,10 @@ export function useSocket(serverUrl = 'http://localhost:5001') {
   const socketRef = useRef(null)
 
   useEffect(() => {
-    socketRef.current = io(serverUrl)
+    const token = localStorage.getItem('token')
+    socketRef.current = io(serverUrl, {
+      auth: { token },
+    })
     return () => {
       socketRef.current?.disconnect()
     }
