@@ -5,7 +5,7 @@ const SLOGAN   = 'Grass roots to greatness'
 const NAVY     = '#0a2463'
 const RED      = '#e8192c'
 const WHITE    = '#ffffff'
-const BG       = '#f0f4ff'
+const BG       = '#f5f5f5'
 const BORDER   = '#e5e5ea'
 const TEXT     = '#1d1d1f'
 const TEXT_2   = '#48484a'
@@ -25,38 +25,50 @@ function baseTemplate({ preheader, body }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="x-apple-disable-message-reformatting">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>${APP}</title>
   <!--[if !mso]><!-->
   <link href="${FONT_URL}" rel="stylesheet" type="text/css">
   <!--<![endif]-->
   <style>
     @import url('${FONT_URL}');
+    :root { color-scheme: light !important; }
+    body { background-color: ${BG} !important; }
+    @media (prefers-color-scheme: dark) {
+      body, .ba-outer  { background-color: ${BG} !important; }
+      .ba-card-navy    { background-color: ${NAVY} !important; }
+      .ba-card-body    { background-color: ${WHITE} !important; }
+      .ba-card-footer  { background-color: ${WHITE} !important; }
+      .ba-stripe-red   { background-color: ${RED} !important; }
+      h1, h2, p, span, td { color: inherit !important; }
+    }
   </style>
 </head>
-<body style="margin:0;padding:0;background:${BG};font-family:${FONT_DM};-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;mso-line-height-rule:exactly;">
+<body class="ba-outer" style="margin:0;padding:0;background-color:${BG} !important;font-family:${FONT_DM};-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;mso-line-height-rule:exactly;">
 
   <!-- preheader (hidden preview text) -->
   <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${esc(preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
 
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:${BG};padding:48px 16px 64px;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:${BG} !important;padding:48px 16px 64px;">
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;">
 
           <!-- ── Navy header ── -->
           <tr>
-            <td style="background:${NAVY};border-radius:14px 14px 0 0;padding:0;">
+            <td class="ba-card-navy" style="background-color:${NAVY} !important;border-radius:14px 14px 0 0;padding:0;">
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="padding:32px 40px 28px;text-align:center;">
                     ${process.env.LOGO_URL ? `<img src="${process.env.LOGO_URL}" alt="${APP}" width="72" height="72" style="display:block;margin:0 auto 16px;border-radius:8px;">` : ''}
-                    <p style="margin:0 0 8px;font-family:${FONT_BAR};font-size:38px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${WHITE};line-height:1;">${APP}</p>
-                    <p style="margin:0;font-family:${FONT_BAR};font-size:13px;font-weight:700;font-style:italic;letter-spacing:2px;text-transform:uppercase;color:${RED};line-height:1;">${SLOGAN}</p>
+                    <p style="margin:0 0 8px;font-family:${FONT_BAR};font-size:38px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${WHITE} !important;line-height:1;">${APP}</p>
+                    <p style="margin:0;font-family:${FONT_BAR};font-size:13px;font-weight:700;font-style:italic;letter-spacing:2px;text-transform:uppercase;color:${RED} !important;line-height:1;">${SLOGAN}</p>
                   </td>
                 </tr>
                 <!-- Red accent stripe -->
                 <tr>
-                  <td style="height:5px;background:${RED};font-size:0;line-height:0;">&nbsp;</td>
+                  <td class="ba-stripe-red" style="height:5px;background-color:${RED} !important;font-size:0;line-height:0;">&nbsp;</td>
                 </tr>
               </table>
             </td>
@@ -64,24 +76,24 @@ function baseTemplate({ preheader, body }) {
 
           <!-- ── White body ── -->
           <tr>
-            <td style="background:${WHITE};padding:40px 40px 36px;border-left:1px solid ${BORDER};border-right:1px solid ${BORDER};">
+            <td class="ba-card-body" style="background-color:${WHITE} !important;padding:40px 40px 36px;border-left:1px solid ${BORDER};border-right:1px solid ${BORDER};">
               ${body}
             </td>
           </tr>
 
           <!-- ── White footer with navy/red accents ── -->
           <tr>
-            <td style="background:${WHITE};border:1px solid ${BORDER};border-top:none;border-radius:0 0 14px 14px;padding:0;">
+            <td class="ba-card-footer" style="background-color:${WHITE} !important;border:1px solid ${BORDER};border-top:none;border-radius:0 0 14px 14px;padding:0;">
               <!-- Red top rule -->
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr><td style="height:3px;background:${RED};font-size:0;line-height:0;">&nbsp;</td></tr>
+                <tr><td class="ba-stripe-red" style="height:3px;background-color:${RED} !important;font-size:0;line-height:0;">&nbsp;</td></tr>
               </table>
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="padding:20px 40px 24px;text-align:center;">
-                    <p style="margin:0 0 4px;font-family:${FONT_BAR};font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${NAVY};">${APP}</p>
-                    <p style="margin:0 0 14px;font-family:${FONT_BAR};font-size:12px;font-weight:700;font-style:italic;letter-spacing:1.5px;text-transform:uppercase;color:${RED};">${SLOGAN}</p>
-                    <p style="margin:0;font-family:${FONT_DM};font-size:11px;color:#aeaeb2;line-height:1.6;">
+                    <p style="margin:0 0 4px;font-family:${FONT_BAR};font-size:16px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${NAVY} !important;">${APP}</p>
+                    <p style="margin:0 0 14px;font-family:${FONT_BAR};font-size:12px;font-weight:700;font-style:italic;letter-spacing:1.5px;text-transform:uppercase;color:${RED} !important;">${SLOGAN}</p>
+                    <p style="margin:0;font-family:${FONT_DM};font-size:11px;color:#aeaeb2 !important;line-height:1.6;">
                       You received this email because you created an account on ${APP}.<br>
                       If you didn't sign up, you can safely ignore this email.
                     </p>
@@ -108,31 +120,43 @@ function systemBaseTemplate({ preheader, body }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="x-apple-disable-message-reformatting">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>${APP}</title>
   <!--[if !mso]><!-->
   <link href="${FONT_URL}" rel="stylesheet" type="text/css">
   <!--<![endif]-->
   <style>
     @import url('${FONT_URL}');
+    :root { color-scheme: light !important; }
+    body { background-color: #f5f5f5 !important; }
+    @media (prefers-color-scheme: dark) {
+      body, .sys-outer   { background-color: #f5f5f5 !important; }
+      .sys-card-body     { background-color: ${WHITE} !important; }
+      .sys-card-footer   { background-color: #f9f9f9 !important; }
+      .sys-stripe-red    { background-color: ${RED} !important; }
+      .sys-stripe-top    { background-color: ${RED} !important; border-radius: 14px 14px 0 0 !important; }
+      h1, h2, p, span, td { color: inherit !important; }
+    }
   </style>
 </head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:${FONT_DM};-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;mso-line-height-rule:exactly;">
+<body class="sys-outer" style="margin:0;padding:0;background-color:#f5f5f5 !important;font-family:${FONT_DM};-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;mso-line-height-rule:exactly;">
 
   <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${esc(preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
 
-  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f5f5f5;padding:40px 16px 56px;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f5f5f5 !important;padding:40px 16px 56px;">
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;">
 
           <!-- Red top stripe + branding -->
           <tr>
-            <td style="background:${WHITE};border-radius:14px 14px 0 0;border:1px solid ${BORDER};border-bottom:none;padding:0;">
+            <td class="sys-card-body" style="background-color:${WHITE} !important;border-radius:14px 14px 0 0;border:1px solid ${BORDER};border-bottom:none;padding:0;">
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr><td style="height:4px;background:${RED};border-radius:14px 14px 0 0;font-size:0;line-height:0;">&nbsp;</td></tr>
+                <tr><td class="sys-stripe-top" style="height:4px;background-color:${RED} !important;border-radius:14px 14px 0 0;font-size:0;line-height:0;">&nbsp;</td></tr>
                 <tr>
                   <td style="padding:28px 36px 20px;">
-                    <p style="margin:0;font-family:${FONT_BAR};font-size:20px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${NAVY};">${APP}</p>
+                    <p style="margin:0;font-family:${FONT_BAR};font-size:20px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:${NAVY} !important;">${APP}</p>
                   </td>
                 </tr>
               </table>
@@ -141,15 +165,15 @@ function systemBaseTemplate({ preheader, body }) {
 
           <!-- White body -->
           <tr>
-            <td style="background:${WHITE};padding:0 36px 32px;border-left:1px solid ${BORDER};border-right:1px solid ${BORDER};">
+            <td class="sys-card-body" style="background-color:${WHITE} !important;padding:0 36px 32px;border-left:1px solid ${BORDER};border-right:1px solid ${BORDER};">
               ${body}
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="background:#f9f9f9;border:1px solid ${BORDER};border-top:none;border-radius:0 0 14px 14px;padding:18px 36px 20px;">
-              <p style="margin:0;font-family:${FONT_DM};font-size:11px;color:#aeaeb2;line-height:1.6;">
+            <td class="sys-card-footer" style="background-color:#f9f9f9 !important;border:1px solid ${BORDER};border-top:none;border-radius:0 0 14px 14px;padding:18px 36px 20px;">
+              <p style="margin:0;font-family:${FONT_DM};font-size:11px;color:#aeaeb2 !important;line-height:1.6;">
                 You received this because you have an account on ${APP}.<br>
                 If you didn't sign up, you can safely ignore this email.
               </p>
