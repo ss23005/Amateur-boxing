@@ -26,11 +26,12 @@ connectDB()
 const app = express()
 const httpServer = http.createServer(app)
 
-// Lock CORS to known origins — prevents cross-origin requests from arbitrary sites
-const allowedOrigins = [
-  process.env.CLIENT_URL ?? 'https://boxingamateur.com',
-  'http://localhost:5173',
-]
+// Required for accurate client IPs behind Vercel/Railway proxy (rate limiting + logging)
+app.set('trust proxy', 1)
+
+// Strip any trailing slash — browser Origin headers never include one
+const clientUrl = (process.env.CLIENT_URL ?? 'https://boxingamateur.com').replace(/\/$/, '')
+const allowedOrigins = [clientUrl, 'http://localhost:5173']
 
 const io = new Server(httpServer, {
   cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
