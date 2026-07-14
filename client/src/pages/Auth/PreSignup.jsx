@@ -1,4 +1,4 @@
-import { useState, useContext, useRef } from 'react'
+import { useState, useContext, useRef, useEffect } from 'react'
 import { useNavigate, Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { TutorialContext } from '../../context/TutorialContext'
@@ -36,10 +36,10 @@ const ROLES = [
 ]
 
 const FEATURES = [
-  { icon: '🥊', text: 'Track your record & career' },
-  { icon: '🏆', text: 'Climb the leaderboard' },
-  { icon: '📍', text: 'Find gyms near you' },
-  { icon: '💬', text: 'Connect with the community' },
+  { text: 'Track your record & career' },
+  { text: 'Climb the amateur leaderboard' },
+  { text: 'Find gyms near you' },
+  { text: 'Connect with the community' },
 ]
 
 export default function PreSignup() {
@@ -53,15 +53,45 @@ export default function PreSignup() {
   const [form, setForm] = useState({
     name: '', username: '', email: '', password: '',
     role: '',
+    // Fighter fields
     gender: '', weightClass: '', wins: '', losses: '', draws: '',
     location: '', gym: '', age: '',
-    gymCity: '', gymPhone: '', gymWebsite: '', gymDescription: '',
+    // Coach — new club fields
+    gymMode: '',        // 'existing' | 'new'
+    selectedGymId: '',  // for existing club
+    gymAddress: '', gymCity: '', gymPostcode: '', gymCountry: '',
+    gymPhone: '', gymWebsite: '', gymDescription: '',
+    gymBrandColor: '',
+    gymLogo: '',        // base64 data URL
   })
-  const [gymStatus, setGymStatus] = useState(null)
-  const [error, setError] = useState('')
+  const [gyms,        setGyms]       = useState([])
+  const [gymsLoading, setGymsLoading] = useState(false)
+  const [gymSearch,   setGymSearch]  = useState('')
+  const [logoPreview, setLogoPreview] = useState('')
+  const [error, setError]   = useState('')
   const [loading, setLoading] = useState(false)
   const [fieldVal, setFieldVal] = useState({ name: null, username: null, email: null, password: null })
   const usernameTimer = useRef(null)
+  const fileInputRef  = useRef(null)
+
+  // Load gym list for fighter step 3 and coach existing-club step 4
+  useEffect(() => {
+    const needGyms =
+      (step === 3 && form.role === 'fighter') ||
+      (step === 4 && form.gymMode === 'existing')
+    if (needGyms && gyms.length === 0) {
+      setGymsLoading(true)
+      api.get('/gyms', { params: { all: 'true' } })
+        .then(({ data }) => setGyms(data))
+        .catch(() => {})
+        .finally(() => setGymsLoading(false))
+    }
+  }, [step, form.role, form.gymMode])
+
+  const filteredGyms = gyms.filter(g => {
+    const q = gymSearch.toLowerCase()
+    return !q || g.name.toLowerCase().includes(q) || g.city?.toLowerCase().includes(q)
+  })
 
   const checkUsernameAvailability = (value) => {
     clearTimeout(usernameTimer.current)
@@ -116,7 +146,6 @@ export default function PreSignup() {
   const set = (field) => (e) => {
     const value = e.target.value
     setForm(prev => ({ ...prev, [field]: value }))
-    if (field === 'gym') setGymStatus(null)
     if (['name', 'username', 'email', 'password'].includes(field)) {
       const result = validate(field, value)
       setFieldVal(prev => ({ ...prev, [field]: result }))
@@ -127,25 +156,39 @@ export default function PreSignup() {
     }
   }
 
-  const checkGym = async (e) => {
-    e.preventDefault()
-    if (!form.gym.trim()) { setError('Please enter a gym name.'); return }
-    setError('')
-    setGymStatus('checking')
-    try {
-      const { data } = await api.get('/gyms/search', { params: { name: form.gym.trim() } })
-      setGymStatus(data.gym ? 'existing' : 'new')
-    } catch {
-      setError('Could not check gym. Please try again.')
-      setGymStatus(null)
+  const handleLogoChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result
+      setLogoPreview(dataUrl)
+      setForm(prev => ({ ...prev, gymLogo: dataUrl }))
     }
+    reader.readAsDataURL(file)
   }
 
-  const totalSteps = (form.role === 'fighter' || form.role === 'coach') ? 3 : 2
+  const removeLogo = () => {
+    setLogoPreview('')
+    setForm(prev => ({ ...prev, gymLogo: '' }))
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  // How many steps to show in the indicator
+  const totalSteps = form.role === 'coach' ? 4 : form.role === 'fighter' ? 3 : 2
+
+  const stepTitle = (() => {
+    if (step === 1) return 'Create Your Account'
+    if (step === 2) return 'I Am A…'
+    if (step === 3) return form.role === 'coach' ? 'Your Club' : 'Fighter Profile'
+    if (step === 4) return form.gymMode === 'new' ? 'Club Details' : 'Select Your Club'
+    return ''
+  })()
 
   const goNext = async (e) => {
     e.preventDefault()
     setError('')
+
     if (step === 1) {
       if (!form.name.trim() || !form.username.trim() || !form.email.trim() || !form.password) {
         setError('Please fill in all fields.')
@@ -186,22 +229,41 @@ export default function PreSignup() {
         setLoading(false)
       }
       setStep(2)
-    } else if (step === 2) {
+      return
+    }
+
+    if (step === 2) {
       if (!form.role) { setError('Please select your role.'); return }
-      if (form.role === 'fighter' || form.role === 'coach') {
-        setStep(3)
-      } else {
-        submit()
-      }
+      if (form.role === 'fighter' || form.role === 'coach') setStep(3)
+      else submit()
+      return
+    }
+
+    if (step === 3 && form.role === 'coach') {
+      if (!form.gymMode) { setError('Please choose New Club or Existing Club.'); return }
+      setStep(4)
+      return
     }
   }
 
   const submit = async (e) => {
     if (e) e.preventDefault()
     setError('')
+
+    // Validate new club minimum
+    if (form.role === 'coach' && form.gymMode === 'new' && !form.gym.trim()) {
+      setError('Please enter your club name.')
+      return
+    }
+    // Validate existing club selection
+    if (form.role === 'coach' && form.gymMode === 'existing' && !form.selectedGymId) {
+      setError('Please select your club from the list.')
+      return
+    }
+
     setLoading(true)
     try {
-      await register(form)
+      await register({ ...form, source: 'presignup' })
       tutorial?.startTutorial()
       navigate('/check-email', { state: { email: form.email } })
     } catch (err) {
@@ -215,25 +277,50 @@ export default function PreSignup() {
     <div className="presignup-layout">
       {/* ── Left hero panel ── */}
       <div className="presignup-hero">
-        <div className="presignup-hero-inner">
-          <img src={logo} alt="Boxing Amateur" className="presignup-hero-logo" />
-          <h1 className="presignup-hero-title">Boxing Amateur</h1>
-          <p className="presignup-hero-slogan">Grass roots to greatness</p>
-          <p className="presignup-hero-sub">The home of amateur boxing. Track records, find gyms, and connect with fighters worldwide.</p>
-          <ul className="presignup-features">
-            {FEATURES.map(f => (
-              <li key={f.text} className="presignup-feature-item">
-                <span className="presignup-feature-icon">{f.icon}</span>
-                <span>{f.text}</span>
+        <div className="psh-brand-row">
+          <img src={logo} alt="Boxing Amateur" className="psh-logo" />
+          <div className="psh-brand-text">
+            <span className="psh-brand-abbr">BA</span>
+            <span className="psh-brand-full">Boxing Amateur</span>
+          </div>
+        </div>
+
+        <div className="psh-headline">
+          <p className="psh-hl-eyebrow">The Home of</p>
+          <h1 className="psh-hl-main">
+            <span className="psh-hl-line">Boxing</span>
+            <span className="psh-hl-line psh-hl-line--red">Amateur</span>
+          </h1>
+          <div className="psh-rule" />
+          <p className="psh-sub">Track records, find gyms, and connect with fighters worldwide.</p>
+        </div>
+
+        <div className="psh-bottom">
+          <ul className="psh-features">
+            {FEATURES.map((f, i) => (
+              <li key={f.text} className="psh-feature">
+                <span className="psh-feature-num">0{i + 1}</span>
+                <span className="psh-feature-text">{f.text}</span>
               </li>
             ))}
           </ul>
+          <div className="psh-footer-strip">
+            <span>100% Free to Join</span>
+            <span aria-hidden="true">·</span>
+            <span>Grass Roots to Greatness</span>
+          </div>
         </div>
       </div>
 
       {/* ── Right form panel ── */}
       <div className="presignup-form-panel">
+        <div className="presignup-form-topbar">
+          <span className="psh-topbar-auth">
+            Already a member?&nbsp;<Link to="/sign-in" className="psh-topbar-signin">Sign in</Link>
+          </span>
+        </div>
         <div className="presignup-form-inner">
+
           {/* Step indicator */}
           <div className="step-indicator" style={{ marginBottom: 24 }}>
             {Array.from({ length: totalSteps }, (_, i) => i + 1).flatMap((n, i) => {
@@ -249,13 +336,11 @@ export default function PreSignup() {
             })}
           </div>
 
-          <h2 className="auth-title">
-            {step === 1 ? 'Create Your Account' : step === 2 ? 'I Am A…' : form.role === 'coach' ? 'Your Gym' : 'Fighter Profile'}
-          </h2>
+          <h2 className="auth-title">{stepTitle}</h2>
 
           {error && <div className="error-banner">{error}</div>}
 
-          {/* Step 1 */}
+          {/* ── Step 1: Account details ── */}
           {step === 1 && (
             <form onSubmit={goNext}>
               <div className="form-group">
@@ -300,7 +385,7 @@ export default function PreSignup() {
             </form>
           )}
 
-          {/* Step 2 – role */}
+          {/* ── Step 2: Role ── */}
           {step === 2 && (
             <form onSubmit={goNext}>
               <div className="role-cards">
@@ -319,65 +404,13 @@ export default function PreSignup() {
               <div className="btn-row">
                 <button className="btn btn-outline" type="button" onClick={() => { setError(''); setStep(1) }}>Back</button>
                 <button className="btn btn-primary btn-row-grow" type="submit">
-                  {(form.role === 'fighter' || form.role === 'coach') ? 'Next' : 'Create Account'}
+                  {form.role === 'fan' ? 'Create Account' : 'Next'}
                 </button>
               </div>
             </form>
           )}
 
-          {/* Step 3 – coach gym */}
-          {step === 3 && form.role === 'coach' && (
-            <form onSubmit={gymStatus ? submit : checkGym}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="ps-gym">Gym Name</label>
-                <input
-                  id="ps-gym" className="input" type="text"
-                  placeholder="e.g. Kronk Gym" value={form.gym}
-                  onChange={set('gym')} required
-                  disabled={gymStatus === 'existing' || gymStatus === 'new'}
-                />
-              </div>
-              {gymStatus === 'existing' && (
-                <div className="gym-status gym-status--found">This gym already exists — you'll be added as a coach.</div>
-              )}
-              {gymStatus === 'new' && (
-                <>
-                  <div className="gym-status gym-status--new">New gym! Fill in what you know (all optional).</div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="ps-gymCity">City / Location</label>
-                    <input id="ps-gymCity" className="input" type="text" placeholder="e.g. Detroit, MI" value={form.gymCity} onChange={set('gymCity')} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="ps-gymPhone">Phone</label>
-                    <input id="ps-gymPhone" className="input" type="tel" placeholder="e.g. (313) 555-0100" value={form.gymPhone} onChange={set('gymPhone')} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="ps-gymWebsite">Website</label>
-                    <input id="ps-gymWebsite" className="input" type="url" placeholder="https://yourgym.com" value={form.gymWebsite} onChange={set('gymWebsite')} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="ps-gymDesc">Description</label>
-                    <textarea id="ps-gymDesc" className="input textarea" placeholder="Tell fighters about your gym…" value={form.gymDescription} onChange={set('gymDescription')} rows={3} />
-                  </div>
-                </>
-              )}
-              <div className="btn-row">
-                <button className="btn btn-outline" type="button" onClick={() => { setError(''); gymStatus ? setGymStatus(null) : setStep(2) }}>Back</button>
-                {!gymStatus && (
-                  <button className="btn btn-primary btn-row-grow" type="submit" disabled={gymStatus === 'checking'}>
-                    {gymStatus === 'checking' ? 'Checking…' : 'Check Gym'}
-                  </button>
-                )}
-                {gymStatus && (
-                  <button className="btn btn-primary btn-row-grow" type="submit" disabled={loading}>
-                    {loading ? 'Creating Account…' : 'Create Account'}
-                  </button>
-                )}
-              </div>
-            </form>
-          )}
-
-          {/* Step 3 – fighter profile */}
+          {/* ── Step 3: Fighter profile ── */}
           {step === 3 && form.role === 'fighter' && (
             <form onSubmit={submit}>
               <div className="form-group">
@@ -425,8 +458,60 @@ export default function PreSignup() {
                 <input id="ps-location" className="input" type="text" placeholder="City, State" value={form.location} onChange={set('location')} required />
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="ps-gym">Current Boxing Gym</label>
-                <input id="ps-gym" className="input" type="text" placeholder="Gym name" value={form.gym} onChange={set('gym')} required />
+                <label className="form-label">Boxing Club</label>
+                {form.selectedGymId ? (
+                  <div className="gym-selected-chip">
+                    <span className="gym-selected-name">{form.gym}</span>
+                    <button
+                      type="button"
+                      className="gym-selected-change"
+                      onClick={() => { setForm(p => ({ ...p, selectedGymId: '', gym: '' })); setGymSearch('') }}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="filter-search-wrap" style={{ marginBottom: 8 }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="filter-search-icon">
+                        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+                      </svg>
+                      <input
+                        className="filter-search-input"
+                        type="text"
+                        placeholder="Search clubs by name or city…"
+                        value={gymSearch}
+                        onChange={e => setGymSearch(e.target.value)}
+                      />
+                    </div>
+                    {gymsLoading && (
+                      <p style={{ fontSize: 13, color: 'var(--text-3)', padding: '8px 0' }}>Loading clubs…</p>
+                    )}
+                    {!gymsLoading && gymSearch && filteredGyms.length === 0 && (
+                      <p style={{ fontSize: 13, color: 'var(--text-3)', padding: '8px 0' }}>No clubs matching "{gymSearch}"</p>
+                    )}
+                    {!gymsLoading && gymSearch.trim() && filteredGyms.length > 0 && (
+                      <div className="gym-select-list" style={{ maxHeight: 200 }}>
+                        {filteredGyms.map(g => (
+                          <button
+                            key={g._id}
+                            type="button"
+                            className="gym-select-item"
+                            onClick={() => { setForm(p => ({ ...p, selectedGymId: g._id, gym: g.name })); setGymSearch('') }}
+                          >
+                            <div className="gym-select-avatar">{g.name.charAt(0).toUpperCase()}</div>
+                            <div className="gym-select-info">
+                              <span className="gym-select-name">{g.name}</span>
+                              {(g.city || g.country) && (
+                                <span className="gym-select-location">{[g.city, g.country].filter(Boolean).join(', ')}</span>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="ps-age">Age</label>
@@ -441,9 +526,221 @@ export default function PreSignup() {
             </form>
           )}
 
-          <p className="auth-footer">
-            Already have an account? <Link to="/sign-in">Sign in</Link>
-          </p>
+          {/* ── Step 3: Coach — new or existing club ── */}
+          {step === 3 && form.role === 'coach' && (
+            <form onSubmit={goNext}>
+              <p style={{ fontSize: 14, color: 'var(--text-3)', marginBottom: 20 }}>
+                Are you registering a new club, or joining one that's already on the platform?
+              </p>
+              <div className="role-cards">
+                <button
+                  type="button"
+                  className={`role-card${form.gymMode === 'existing' ? ' selected' : ''}`}
+                  onClick={() => setForm(prev => ({ ...prev, gymMode: 'existing', gym: '', gymLogo: '', gymBrandColor: '' }))}
+                >
+                  <span className="role-card-label">Existing Club</span>
+                  <span className="role-card-desc">Find and join a club already on the platform</span>
+                </button>
+                <button
+                  type="button"
+                  className={`role-card${form.gymMode === 'new' ? ' selected' : ''}`}
+                  onClick={() => setForm(prev => ({ ...prev, gymMode: 'new', selectedGymId: '', gymAddress: '', gymCity: '', gymPostcode: '', gymCountry: '' }))}
+                >
+                  <span className="role-card-label">New Club</span>
+                  <span className="role-card-desc">Register your club on Boxing Amateur</span>
+                </button>
+              </div>
+              <div className="btn-row">
+                <button className="btn btn-outline" type="button" onClick={() => { setError(''); setStep(2) }}>Back</button>
+                <button className="btn btn-primary btn-row-grow" type="submit" disabled={!form.gymMode}>Next</button>
+              </div>
+            </form>
+          )}
+
+          {/* ── Step 4: Coach — select existing club ── */}
+          {step === 4 && form.role === 'coach' && form.gymMode === 'existing' && (
+            <form onSubmit={submit}>
+              <div className="filter-search-wrap" style={{ marginBottom: 16 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="filter-search-icon">
+                  <circle cx="11" cy="11" r="7"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input
+                  className="filter-search-input"
+                  type="text"
+                  placeholder="Search by club name or city…"
+                  value={gymSearch}
+                  onChange={e => setGymSearch(e.target.value)}
+                  autoFocus
+                />
+              </div>
+
+              {gymsLoading && <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: 16 }}>Loading clubs…</p>}
+
+              {!gymsLoading && !gymSearch.trim() && (
+                <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: 16 }}>
+                  Start typing to search for your club…
+                </p>
+              )}
+
+              {!gymsLoading && gymSearch.trim() && filteredGyms.length === 0 && (
+                <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: 16 }}>
+                  No clubs matching "{gymSearch}"
+                </p>
+              )}
+
+              {!gymsLoading && gymSearch.trim() && filteredGyms.length > 0 && (
+                <div className="gym-select-list">
+                  {filteredGyms.map(g => (
+                    <button
+                      key={g._id}
+                      type="button"
+                      className={`gym-select-item${form.selectedGymId === g._id ? ' selected' : ''}`}
+                      onClick={() => setForm(prev => ({ ...prev, selectedGymId: g._id }))}
+                    >
+                      <div className="gym-select-avatar">{g.name.charAt(0).toUpperCase()}</div>
+                      <div className="gym-select-info">
+                        <span className="gym-select-name">{g.name}</span>
+                        {(g.city || g.country) && (
+                          <span className="gym-select-location">
+                            {[g.city, g.country].filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                      </div>
+                      {form.selectedGymId === g._id && (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="gym-select-check">
+                          <path d="M20 6L9 17l-5-5"/>
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="btn-row" style={{ marginTop: 20 }}>
+                <button className="btn btn-outline" type="button" onClick={() => { setError(''); setStep(3) }}>Back</button>
+                <button className="btn btn-primary btn-row-grow" type="submit" disabled={loading || !form.selectedGymId}>
+                  {loading ? 'Creating Account…' : 'Join Club & Continue'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* ── Step 4: Coach — create new club ── */}
+          {step === 4 && form.role === 'coach' && form.gymMode === 'new' && (
+            <form onSubmit={submit}>
+
+              {/* Logo upload */}
+              <div className="form-group">
+                <label className="form-label">Club Logo</label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleLogoChange}
+                />
+                {logoPreview ? (
+                  <div className="logo-upload-preview">
+                    <img src={logoPreview} alt="Club logo preview" className="logo-upload-img" />
+                    <button type="button" className="logo-upload-remove" onClick={removeLogo}>✕ Remove</button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="logo-upload-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22, marginBottom: 6 }}>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span>Upload Logo</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 2 }}>PNG, JPG or SVG</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Brand colour */}
+              <div className="form-group">
+                <label className="form-label">Brand Colour</label>
+                <div className="color-picker-row">
+                  <input
+                    type="color"
+                    className="color-picker-swatch"
+                    value={form.gymBrandColor || '#0a2463'}
+                    onChange={e => setForm(prev => ({ ...prev, gymBrandColor: e.target.value }))}
+                  />
+                  <input
+                    type="text"
+                    className="input color-picker-hex"
+                    value={form.gymBrandColor || '#0a2463'}
+                    onChange={e => {
+                      const v = e.target.value
+                      if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setForm(prev => ({ ...prev, gymBrandColor: v }))
+                    }}
+                    maxLength={7}
+                    spellCheck={false}
+                  />
+                  <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Hex colour</span>
+                </div>
+              </div>
+
+              {/* Club name */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="ps-gym">Club Name <span style={{ color: 'var(--accent)' }}>*</span></label>
+                <input
+                  id="ps-gym" className="input" type="text"
+                  placeholder="e.g. Kronk Gym" value={form.gym}
+                  onChange={set('gym')} required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="ps-gymAddress">Street Address</label>
+                <input id="ps-gymAddress" className="input" type="text" placeholder="e.g. 14 Broad Street" value={form.gymAddress} onChange={set('gymAddress')} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="ps-gymCity">Town / City</label>
+                <input id="ps-gymCity" className="input" type="text" placeholder="e.g. Manchester" value={form.gymCity} onChange={set('gymCity')} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="ps-gymPostcode">Postcode</label>
+                <input id="ps-gymPostcode" className="input" type="text" placeholder="e.g. M1 1AA" value={form.gymPostcode} onChange={set('gymPostcode')} style={{ textTransform: 'uppercase' }} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="ps-gymCountry">Country</label>
+                <input id="ps-gymCountry" className="input" type="text" placeholder="e.g. England" value={form.gymCountry} onChange={set('gymCountry')} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="ps-gymDesc">About the Club</label>
+                <textarea id="ps-gymDesc" className="input textarea" placeholder="Tell fighters about your club…" value={form.gymDescription} onChange={set('gymDescription')} rows={3} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="ps-gymPhone">Phone</label>
+                <input id="ps-gymPhone" className="input" type="tel" placeholder="e.g. (313) 555-0100" value={form.gymPhone} onChange={set('gymPhone')} />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="ps-gymWebsite">Website</label>
+                <input id="ps-gymWebsite" className="input" type="url" placeholder="https://yourgym.com" value={form.gymWebsite} onChange={set('gymWebsite')} />
+              </div>
+
+              <div className="btn-row">
+                <button className="btn btn-outline" type="button" onClick={() => { setError(''); setStep(3) }}>Back</button>
+                <button className="btn btn-primary btn-row-grow" type="submit" disabled={loading}>
+                  {loading ? 'Creating Account…' : 'Register Club & Continue'}
+                </button>
+              </div>
+            </form>
+          )}
+
         </div>
       </div>
     </div>

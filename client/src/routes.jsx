@@ -5,13 +5,15 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 import AdminDashboard from './pages/Admin/AdminDashboard'
 import Discover from './pages/Discover/Discover'
 import UserPublicProfile from './pages/Users/UserPublicProfile'
+import GymPublicProfile from './pages/Gyms/GymPublicProfile'
 
 const routes = [
   { path: '/welcome',          element: <PreSignup />,                                  noNav: true },
   { path: '/sign-in',          element: <PreLogin />,                                   noNav: true },
   { path: '/check-email',      element: <CheckEmail />,                                 noNav: true },
-  { path: '/discover',         element: <Discover />,                                   noNav: true },
+  { path: '/discover',         element: <ProtectedRoute><Discover /></ProtectedRoute>,   noNav: true },
   { path: '/users/:username',  element: <UserPublicProfile />,                          noNav: true },
+  { path: '/gyms/:slug',       element: <GymPublicProfile />,                           noNav: true },
   { path: '/admin',            element: <ProtectedRoute><AdminDashboard /></ProtectedRoute> },
 ]
 

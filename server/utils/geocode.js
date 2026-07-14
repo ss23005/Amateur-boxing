@@ -3,9 +3,8 @@
  * Builds the best possible query from whatever fields are available.
  * Returns { lat, lng } or null if nothing was found.
  */
-export async function geocodeGym({ name, address, city, country }) {
-  // Build query from most-specific to least-specific
-  const parts = [address, city, country].filter(Boolean)
+export async function geocodeGym({ name, address, city, postcode, country }) {
+  const parts = [address, city, postcode, country].filter(Boolean)
   if (!parts.length) return null
 
   const q = encodeURIComponent(parts.join(', '))

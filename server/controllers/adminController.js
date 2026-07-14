@@ -6,6 +6,7 @@ import News from '../models/News.js'
 import FighterChangeRequest from '../models/FighterChangeRequest.js'
 import Gym from '../models/Gym.js'
 import { geocodeGym } from '../utils/geocode.js'
+import { generateGymSlug } from '../utils/slug.js'
 import {
   sendApprovalEmail,
   sendDenialEmail,
@@ -274,8 +275,10 @@ export const adminCreateGym = async (req, res) => {
     const { name, address, city, country, phone, website, email, description } = req.body
     const gymData = { name, address, city, country, phone, website, email, description }
     const coords = await geocodeGym(gymData)
+    const slug = await generateGymSlug(name)
     const gym = await Gym.create({
       ...gymData,
+      slug,
       ...(coords ? { coordinates: coords } : {}),
     })
     res.status(201).json(gym)

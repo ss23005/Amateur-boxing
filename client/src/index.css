@@ -543,6 +543,195 @@ p { margin: 0; }
   border: 1px solid rgba(234, 179, 8, 0.25);
 }
 
+/* ── Gym select list (coach existing club step) ── */
+.gym-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px;
+}
+
+.gym-select-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--r-sm) - 2px);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gym-select-item:hover {
+  background: var(--bg);
+  border-color: var(--border);
+}
+
+.gym-select-item.selected {
+  background: rgba(10, 36, 99, 0.06);
+  border-color: var(--navy);
+}
+
+.gym-select-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gym-select-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gym-select-name {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gym-select-location {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.gym-select-check {
+  width: 18px;
+  height: 18px;
+  color: var(--navy);
+  flex-shrink: 0;
+}
+
+.gym-selected-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid var(--navy);
+  border-radius: var(--r-sm);
+  background: rgba(10, 36, 99, 0.05);
+}
+
+.gym-selected-name {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.gym-selected-change {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+/* ── Logo upload ── */
+.logo-upload-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 24px 16px;
+  border: 2px dashed var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--text-3);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  gap: 2px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.logo-upload-btn:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+
+.logo-upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+}
+
+.logo-upload-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+}
+
+.logo-upload-remove {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+}
+
+/* ── Brand colour picker ── */
+.color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.color-picker-swatch {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 2px;
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+
+.color-picker-hex {
+  width: 110px;
+  flex-shrink: 0;
+  font-family: var(--mono, monospace);
+  letter-spacing: 0.05em;
+}
+
 .textarea {
   resize: vertical;
   min-height: 80px;
@@ -4544,115 +4733,283 @@ main { flex: 1; background: var(--bg); }
 /* ─────────────────────────────────────────────────────
    Pre-signup landing page
    ───────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────
+   Pre-signup split-screen layout
+   ───────────────────────────────────────────────────── */
 .presignup-layout {
   display: flex;
   min-height: 100vh;
 }
 
+/* ── Left hero panel ── */
 .presignup-hero {
-  flex: 0 0 42%;
-  background: var(--navy);
+  flex: 0 0 45%;
+  background: var(--navy-dark);
   background-image:
-    radial-gradient(ellipse at 20% 80%, rgba(232,25,44,0.18) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.04) 0%, transparent 50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 40px;
+    radial-gradient(ellipse at 10% 90%, rgba(232,25,44,0.14) 0%, transparent 52%),
+    repeating-linear-gradient(
+      -55deg,
+      transparent,
+      transparent 28px,
+      rgba(255,255,255,0.012) 28px,
+      rgba(255,255,255,0.012) 29px
+    );
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 44px 52px;
 }
 
-.presignup-hero-inner {
-  max-width: 340px;
-}
-
-.presignup-hero-logo {
-  height: 72px;
-  width: auto;
-  display: block;
-  margin-bottom: 28px;
-}
-
-.presignup-hero-title {
+/* Ghost watermark */
+.presignup-hero::before {
+  content: 'ABW';
+  position: absolute;
   font-family: var(--display);
-  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 800;
+  font-size: clamp(200px, 26vw, 360px);
+  color: rgba(255,255,255,0.028);
+  right: -6%;
+  bottom: -6%;
+  line-height: 0.85;
+  letter-spacing: -6px;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Right red accent stripe */
+.presignup-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* Brand row */
+.psh-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.psh-logo {
+  height: 40px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.psh-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.psh-brand-abbr {
+  font-family: var(--display);
+  font-size: 17px;
   font-weight: 700;
   color: #fff;
-  line-height: 1.1;
-  letter-spacing: -0.5px;
-  margin: 0 0 10px;
-}
-
-.presignup-hero-slogan {
-  font-family: var(--display);
-  font-size: 1rem;
-  font-weight: 600;
-  font-style: italic;
-  letter-spacing: 0.5px;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: #e8192c;
-  margin: 0 0 20px;
+  line-height: 1;
 }
 
-.presignup-hero-sub {
-  font-size: 15px;
-  color: rgba(255,255,255,0.6);
-  line-height: 1.65;
-  margin: 0 0 36px;
+.psh-brand-full {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+  line-height: 1;
 }
 
-.presignup-features {
+/* Hero headline */
+.psh-headline {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.psh-hl-eyebrow {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 14px;
+}
+
+.psh-hl-main {
+  font-family: var(--display);
+  font-weight: 700;
+  line-height: 0.9;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 28px;
+  color: #fff;
+}
+
+.psh-hl-line {
+  display: block;
+  font-size: clamp(3rem, 4.8vw, 4.4rem);
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+}
+
+.psh-hl-line--red  { color: var(--accent); }
+.psh-hl-line--sm   {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: rgba(255,255,255,0.42);
+}
+
+/* Red rule */
+.psh-rule {
+  width: 40px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin-bottom: 20px;
+}
+
+.psh-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.48);
+  line-height: 1.7;
+  max-width: 280px;
+}
+
+/* Bottom block: features + footer */
+.psh-bottom {
+  flex-shrink: 0;
+}
+
+.psh-features {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 11px;
+  margin-bottom: 28px;
 }
 
-.presignup-feature-item {
+.psh-feature {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 14px;
-  color: rgba(255,255,255,0.75);
+  gap: 16px;
 }
 
-.presignup-feature-icon {
-  font-size: 18px;
+.psh-feature-num {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent);
+  width: 22px;
   flex-shrink: 0;
-  width: 28px;
-  text-align: center;
 }
 
+.psh-feature-text {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  font-weight: 400;
+}
+
+/* Footer strip */
+.psh-footer-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.psh-footer-strip span {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.22);
+}
+
+/* ── Right form panel ── */
 .presignup-form-panel {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  background: var(--bg);
+  flex-direction: column;
+  background: #fff;
   overflow-y: auto;
 }
 
-.presignup-form-inner {
-  width: 100%;
-  max-width: 400px;
+.presignup-form-topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 16px 48px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex-shrink: 0;
 }
 
+.psh-topbar-link {
+  font-size: 13px;
+  color: var(--text-3);
+  font-weight: 500;
+  transition: color var(--ease);
+}
+.psh-topbar-link:hover { color: var(--navy); }
+
+.psh-topbar-auth {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.psh-topbar-signin {
+  color: var(--navy);
+  font-weight: 600;
+}
+.psh-topbar-signin:hover { color: var(--accent); }
+
+.presignup-form-inner {
+  width: 100%;
+  max-width: 440px;
+  margin: auto;
+  padding: 40px 48px;
+}
+
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .presignup-layout { flex-direction: column; }
+
   .presignup-hero {
     position: static;
     height: auto;
     flex: none;
-    padding: 36px 24px 28px;
-    align-items: flex-start;
+    padding: 28px 24px 24px;
+    min-height: 0;
   }
-  .presignup-hero-logo { height: 52px; margin-bottom: 18px; }
-  .presignup-hero-title { font-size: 1.7rem; }
-  .presignup-features { display: none; }
-  .presignup-form-panel { padding: 32px 20px 48px; }
+  .presignup-hero::before { display: none; }
+
+  .psh-headline {
+    flex: none;
+    padding: 20px 0 4px;
+  }
+  .psh-hl-line     { font-size: 2.8rem; }
+  .psh-hl-line--sm { font-size: 1.7rem; }
+  .psh-bottom      { display: none; }
+
+  .presignup-form-topbar { padding: 14px 24px; }
+  .presignup-form-inner  { padding: 28px 24px 48px; }
 }
 
 /* ─────────────────────────────────────────────────────
@@ -4799,6 +5156,26 @@ main { flex: 1; background: var(--bg); }
   font-size: 13px;
   color: var(--text-4);
   margin: 0 0 20px;
+}
+
+.discover-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.discover-section-title {
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.discover-section-count {
+  font-size: 13px;
+  color: var(--text-4);
 }
 
 .user-grid {
@@ -5372,6 +5749,104 @@ main { flex: 1; background: var(--bg); }
   color: var(--text-4);
   margin: 0;
   font-style: italic;
+}
+
+/* ── Gym public profile – logo in header ── */
+.gym-profile-logo-wrap {
+  width: 110px;
+  height: 110px;
+  border-radius: 16px;
+  margin: 0 auto 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+  flex-shrink: 0;
+}
+
+.gym-profile-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+  padding: 10px;
+  display: block;
+}
+
+.gym-profile-logo-initial {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 3rem;
+  font-weight: 900;
+}
+
+/* Stat pills in gym header */
+.gym-profile-stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.gym-profile-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 24px;
+  border: 2px solid var(--navy);
+  border-radius: 10px;
+  min-width: 80px;
+}
+
+.gym-profile-stat-num {
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.gym-profile-stat-label {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+}
+
+/* ── Fighter profile – club banner ── */
+.fighter-club-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  margin-bottom: 16px;
+}
+
+.fighter-club-banner-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.fighter-club-banner-name {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.fighter-club-banner-name:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 860px) {

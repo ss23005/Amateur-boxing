@@ -4,10 +4,10 @@ import { useAuth } from '../../hooks/useAuth'
 import logo from '../../assets/logo.svg'
 
 const FEATURES = [
-  { icon: '🥊', text: 'Track your record & career' },
-  { icon: '🏆', text: 'Climb the leaderboard' },
-  { icon: '📍', text: 'Find gyms near you' },
-  { icon: '💬', text: 'Connect with the community' },
+  { text: 'Track your record & career' },
+  { text: 'Climb the amateur leaderboard' },
+  { text: 'Find gyms near you' },
+  { text: 'Connect with the community' },
 ]
 
 export default function PreLogin() {
@@ -35,27 +35,53 @@ export default function PreLogin() {
 
   return (
     <div className="presignup-layout">
+
       {/* ── Left hero panel ── */}
       <div className="presignup-hero">
-        <div className="presignup-hero-inner">
-          <img src={logo} alt="Boxing Amateur" className="presignup-hero-logo" />
-          <h1 className="presignup-hero-title">Boxing Amateur</h1>
-          <p className="presignup-hero-slogan">Grass roots to greatness</p>
-          <p className="presignup-hero-sub">The home of amateur boxing. Track records, find gyms, and connect with fighters worldwide.</p>
-          <ul className="presignup-features">
-            {FEATURES.map(f => (
-              <li key={f.text} className="presignup-feature-item">
-                <span className="presignup-feature-icon">{f.icon}</span>
-                <span>{f.text}</span>
+        <div className="psh-brand-row">
+          <img src={logo} alt="Boxing Amateur" className="psh-logo" />
+          <div className="psh-brand-text">
+            <span className="psh-brand-abbr">BA</span>
+            <span className="psh-brand-full">Boxing Amateur</span>
+          </div>
+        </div>
+
+        <div className="psh-headline">
+          <p className="psh-hl-eyebrow">The Home of</p>
+          <h1 className="psh-hl-main">
+            <span className="psh-hl-line">Boxing</span>
+            <span className="psh-hl-line psh-hl-line--red">Amateur</span>
+          </h1>
+          <div className="psh-rule" />
+          <p className="psh-sub">Track records, find gyms, and connect with fighters worldwide.</p>
+        </div>
+
+        <div className="psh-bottom">
+          <ul className="psh-features">
+            {FEATURES.map((f, i) => (
+              <li key={f.text} className="psh-feature">
+                <span className="psh-feature-num">0{i + 1}</span>
+                <span className="psh-feature-text">{f.text}</span>
               </li>
             ))}
           </ul>
+          <div className="psh-footer-strip">
+            <span>100% Free to Join</span>
+            <span aria-hidden="true">·</span>
+            <span>Grass Roots to Greatness</span>
+          </div>
         </div>
       </div>
 
       {/* ── Right form panel ── */}
       <div className="presignup-form-panel">
+        <div className="presignup-form-topbar">
+          <span className="psh-topbar-auth">
+            New here?&nbsp;<Link to="/welcome" className="psh-topbar-signin">Create an account</Link>
+          </span>
+        </div>
         <div className="presignup-form-inner">
+
           <h2 className="auth-title">Welcome Back</h2>
 
           {error && <div className="error-banner">{error}</div>}
@@ -94,9 +120,6 @@ export default function PreLogin() {
             </button>
           </form>
 
-          <p className="auth-footer">
-            No account? <Link to="/welcome">Create one</Link>
-          </p>
         </div>
       </div>
     </div>

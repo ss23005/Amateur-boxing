@@ -113,7 +113,7 @@ export const getPublicUsers = async (req, res) => {
       role:     { $nin: ['superadmin', 'admin'] },
       username: { $exists: true, $ne: null, $ne: '' },
     })
-      .select('name username avatar role weightClass record location age gender gym createdAt followers following')
+      .select('name username avatar role weightClass record location age gender gym gymId createdAt followers following')
       .sort({ createdAt: -1 })
       .limit(200)
     res.json(users)
@@ -125,7 +125,8 @@ export const getPublicUsers = async (req, res) => {
 export const getUserPublicProfile = async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
-      .select('name username avatar role weightClass record location age gender gym createdAt followers following')
+      .select('name username avatar role weightClass record location age gender gym gymId createdAt followers following stats')
+      .populate('gymId', 'name logo brandColor slug')
     if (!user) return res.status(404).json({ message: 'User not found' })
     res.json(user)
   } catch (err) {

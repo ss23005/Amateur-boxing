@@ -5,6 +5,8 @@ import Fighter from '../models/Fighter.js'
 import Gym from '../models/Gym.js'
 import { geocodeGym } from '../utils/geocode.js'
 import { sendVerificationEmail, sendSystemVerificationEmail } from '../utils/email.js'
+import { uploadImage } from '../utils/cloudinary.js'
+import { generateGymSlug } from '../utils/slug.js'
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' })
@@ -12,7 +14,10 @@ const generateToken = (id) =>
 export const register = async (req, res) => {
   const {
     name, username, email, password, role, gender, weightClass, wins, losses, draws,
-    location, gym, age, gymCity, gymPhone, gymWebsite, gymDescription, source,
+    location, gym, age,
+    gymAddress, gymCity, gymPostcode, gymCountry, gymPhone, gymWebsite, gymDescription,
+    selectedGymId, gymBrandColor, gymLogo,
+    source,
   } = req.body
   try {
     const exists = await User.findOne({ email })
@@ -35,36 +40,71 @@ export const register = async (req, res) => {
       age:      age ? Number(age) : undefined,
     } : {}
 
-    // For coaches: find existing gym by name (case-insensitive) or create a new pending one
     let gymId    = null
     let newGymId = null
-    if (role === 'coach' && gym) {
-      const escaped = gym.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      let gymDoc = await Gym.findOne({ name: { $regex: new RegExp(`^${escaped}$`, 'i') } })
-      if (!gymDoc) {
+
+    // Fighters can link directly to an approved gym
+    if (role === 'fighter' && selectedGymId) {
+      gymId = selectedGymId
+    }
+
+    // Coaches: join an existing gym by ID, or create a new pending one
+    if (role === 'coach') {
+      if (selectedGymId) {
+        // Coach joining an already-approved gym
+        gymId = selectedGymId
+      } else if (gym) {
+        // Coach creating a new gym
         const gymData = {
           name:        gym.trim(),
+          address:     gymAddress     || '',
           city:        gymCity        || '',
+          postcode:    gymPostcode    || '',
+          country:     gymCountry     || '',
           phone:       gymPhone       || '',
           website:     gymWebsite     || '',
           description: gymDescription || '',
+          brandColor:  gymBrandColor  || '',
         }
         const coords = await geocodeGym(gymData)
-        gymDoc = await Gym.create({
+
+        let logoUrl = ''
+        if (gymLogo) {
+          const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
+                                process.env.CLOUDINARY_API_KEY    &&
+                                process.env.CLOUDINARY_API_SECRET
+          if (hasCloudinary) {
+            try {
+              const base64Data = gymLogo.replace(/^data:image\/\w+;base64,/, '')
+              const buffer = Buffer.from(base64Data, 'base64')
+              logoUrl = await uploadImage(buffer, 'gym-logos')
+            } catch (uploadErr) {
+              console.error('Cloudinary upload failed, storing base64 directly:', uploadErr.message)
+              logoUrl = gymLogo
+            }
+          } else {
+            // No Cloudinary configured — store base64 data URL directly in MongoDB
+            logoUrl = gymLogo
+          }
+        }
+
+        const slug = await generateGymSlug(gymData.name)
+        const gymDoc = await Gym.create({
           ...gymData,
-          status: 'pending',
+          slug,
+          logo:   logoUrl,
+          status: 'approved',
           ...(coords ? { coordinates: coords } : {}),
         })
         newGymId = gymDoc._id
+        gymId    = gymDoc._id
       }
-      gymId = gymDoc._id
     }
 
     const verificationToken   = crypto.randomInt(100000, 1000000).toString()
     const verificationExpires = new Date(Date.now() + 15 * 60 * 1000)
 
-    // Fighters and coaches start pending; everyone else is approved immediately
-    const userStatus = (role === 'fighter' || role === 'coach') ? 'pending' : 'approved'
+    const userStatus = 'approved'
 
     const user = await User.create({
       name,
@@ -96,7 +136,7 @@ export const register = async (req, res) => {
         stats: { age: user.age || undefined },
         bio:    '',
         user:   user._id,
-        status: 'pending',
+        status: 'approved',
       })
     }
 
