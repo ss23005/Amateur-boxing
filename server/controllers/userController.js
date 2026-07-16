@@ -1,6 +1,7 @@
 import User from '../models/User.js'
 import Notification from '../models/Notification.js'
 import Fighter from '../models/Fighter.js'
+import { sendFollowerNotificationEmail } from '../utils/email.js'
 
 export const getSocialData = async (req, res) => {
   try {
@@ -52,6 +53,7 @@ export const followUser = async (req, res) => {
 
     // Notify the followed user (fire-and-forget)
     Notification.create({ recipient: id, sender: req.user._id, type: 'follow' }).catch(() => {})
+    sendFollowerNotificationEmail(target, req.user).catch(() => {})
 
     res.json({ following: true })
   } catch (err) {

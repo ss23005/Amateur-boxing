@@ -1,7 +1,14 @@
 import { useState, useRef } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import api from '../../services/api'
 import logo from '../../assets/logo.svg'
+
+const FEATURES = [
+  { text: 'Track your record & career' },
+  { text: 'Climb the amateur leaderboard' },
+  { text: 'Find gyms near you' },
+  { text: 'Connect with the community' },
+]
 
 export default function CheckEmail() {
   const location = useLocation()
@@ -73,19 +80,51 @@ export default function CheckEmail() {
 
   return (
     <div className="presignup-layout">
-      {/* Left hero */}
+
+      {/* ── Left hero panel ── */}
       <div className="presignup-hero">
-        <div className="presignup-hero-inner">
-          <img src={logo} alt="Boxing Amateur" className="presignup-hero-logo" />
-          <h1 className="presignup-hero-title">Almost there.</h1>
-          <p className="presignup-hero-sub">
-            Enter the 6-digit code we sent to your email and you're in.
-          </p>
+        <div className="psh-brand-row">
+          <img src={logo} alt="Boxing Amateur" className="psh-logo" />
+          <div className="psh-brand-text">
+            <span className="psh-brand-abbr">BA</span>
+            <span className="psh-brand-full">Boxing Amateur</span>
+          </div>
+        </div>
+
+        <div className="psh-headline">
+          <p className="psh-hl-eyebrow">The Home of</p>
+          <h1 className="psh-hl-main">
+            <span className="psh-hl-line">Boxing</span>
+            <span className="psh-hl-line psh-hl-line--red">Amateur</span>
+          </h1>
+          <div className="psh-rule" />
+          <p className="psh-sub">Track records, find gyms, and connect with fighters worldwide.</p>
+        </div>
+
+        <div className="psh-bottom">
+          <ul className="psh-features">
+            {FEATURES.map((f, i) => (
+              <li key={f.text} className="psh-feature">
+                <span className="psh-feature-num">0{i + 1}</span>
+                <span className="psh-feature-text">{f.text}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="psh-footer-strip">
+            <span>100% Free to Join</span>
+            <span aria-hidden="true">·</span>
+            <span>Grass Roots to Greatness</span>
+          </div>
         </div>
       </div>
 
-      {/* Right form panel */}
+      {/* ── Right form panel ── */}
       <div className="presignup-form-panel">
+        <div className="presignup-form-topbar">
+          <span className="psh-topbar-auth">
+            Wrong account?&nbsp;<Link to="/sign-in" className="psh-topbar-signin">Sign in</Link>
+          </span>
+        </div>
         <div className="presignup-form-inner">
 
           <div style={{ textAlign: 'center', marginBottom: 32 }}>

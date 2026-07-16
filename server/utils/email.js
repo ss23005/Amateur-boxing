@@ -504,6 +504,73 @@ export async function sendGymApprovalEmail(user, gym) {
   })
 }
 
+export async function sendFollowerNotificationEmail(recipient, follower) {
+  if (!process.env.SENDGRID_API_KEY) return
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+  const clientUrl  = process.env.CLIENT_URL ?? 'https://boxingamateur.com'
+  const initial    = esc((follower.name ?? '?').charAt(0).toUpperCase())
+  const ROLE_LABEL = { fighter: 'Amateur Fighter', coach: 'Boxing Coach', fan: 'Fan' }
+  const roleLabel  = ROLE_LABEL[follower.role] ?? 'Member'
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-family:${FONT_BAR};font-size:28px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:${NAVY};line-height:1.1;">New Follower</h1>
+    <p style="margin:0 0 24px;font-family:${FONT_DM};font-size:15px;color:${TEXT_2};line-height:1.65;">
+      <strong style="color:${TEXT};font-weight:600;">${esc(follower.name)}</strong> is now following you on ${APP}.
+    </p>
+
+    <!-- Follower card -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:28px;">
+      <tr>
+        <td style="background:#f5f5f5;border:1px solid ${BORDER};border-radius:10px;padding:16px 20px;">
+          <table cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="vertical-align:middle;padding-right:16px;">
+                <table width="48" cellpadding="0" cellspacing="0" role="presentation">
+                  <tr>
+                    <td style="width:48px;height:48px;background:${NAVY};border-radius:10px;text-align:center;vertical-align:middle;font-family:${FONT_BAR};font-size:22px;font-weight:700;color:${WHITE};">${initial}</td>
+                  </tr>
+                </table>
+              </td>
+              <td style="vertical-align:middle;">
+                <p style="margin:0 0 2px;font-family:${FONT_DM};font-size:15px;font-weight:600;color:${TEXT};">${esc(follower.name)}</p>
+                ${follower.username ? `<p style="margin:0 0 2px;font-family:${FONT_DM};font-size:13px;color:${TEXT_3};">@${esc(follower.username)}</p>` : ''}
+                <p style="margin:0;font-family:${FONT_DM};font-size:12px;color:${TEXT_3};">${roleLabel}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px;">
+      <tr>
+        <td style="background:${RED};border-radius:8px;padding:0;">
+          <a href="${clientUrl}/users/${esc(follower.username ?? '')}" style="display:inline-block;padding:13px 28px;font-family:${FONT_BAR};font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${WHITE};text-decoration:none;">View Profile</a>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:16px;">
+      <tr><td style="height:1px;background:${BORDER};font-size:0;">&nbsp;</td></tr>
+    </table>
+
+    <p style="margin:0;font-family:${FONT_DM};font-size:12px;color:#aeaeb2;line-height:1.6;">
+      You received this because <strong>${esc(follower.name)}</strong> started following you on ${APP}.
+    </p>
+  `
+
+  await sgMail.send({
+    to:      recipient.email,
+    from:    { email: process.env.FROM_EMAIL, name: APP },
+    subject: `${esc(follower.name)} is now following you on ${APP}`,
+    html:    systemBaseTemplate({
+      preheader: `${follower.name} started following you on ${APP}.`,
+      body,
+    }),
+  })
+}
+
 export async function sendGymDenialEmail(user, gym, message) {
   if (!process.env.SENDGRID_API_KEY) return
   sgMail.setApiKey(process.env.SENDGRID_API_KEY)
