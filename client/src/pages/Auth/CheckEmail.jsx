@@ -17,7 +17,7 @@ export default function CheckEmail() {
 
   const [digits, setDigits]       = useState(['', '', '', '', '', ''])
   const [error, setError]         = useState('')
-  const [resendStatus, setResend] = useState(null) // null | 'sending' | 'sent' | 'error'
+  const [resendStatus, setResend] = useState(null)
   const [verifying, setVerifying] = useState(false)
   const inputs = useRef([])
 
@@ -128,8 +128,7 @@ export default function CheckEmail() {
         <div className="presignup-form-inner">
 
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>✉️</div>
-            <h2 className="auth-title" style={{ marginBottom: 6 }}>Check your inbox</h2>
+            <h2 className="auth-title" style={{ marginBottom: 8 }}>Check your inbox</h2>
             <p style={{ fontSize: 14, color: 'var(--text-3)', margin: 0 }}>
               We sent a 6-digit code to<br />
               <strong style={{ color: 'var(--text)' }}>{email}</strong>
@@ -137,7 +136,6 @@ export default function CheckEmail() {
           </div>
 
           <form onSubmit={verify}>
-            {/* OTP digit inputs */}
             <div className="otp-row" onPaste={handlePaste}>
               {digits.map((d, i) => (
                 <input
