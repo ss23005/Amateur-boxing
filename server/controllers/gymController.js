@@ -69,32 +69,52 @@ export const updateGym = async (req, res) => {
       return res.status(403).json({ message: 'Not authorised to edit this gym' })
     }
 
-    const { name, city, phone, website, description, address, brandColor, logo: logoBase64 } = req.body
+    const { name, city, postcode, country, phone, website, email, description, address, brandColor, logo: logoInput, gallery: galleryInput } = req.body
     const updates = {}
     if (name        !== undefined) updates.name        = name.trim()
     if (city        !== undefined) updates.city        = city.trim()
+    if (postcode    !== undefined) updates.postcode    = postcode.trim()
+    if (country     !== undefined) updates.country     = country.trim()
     if (phone       !== undefined) updates.phone       = phone.trim()
     if (website     !== undefined) updates.website     = website.trim()
+    if (email       !== undefined) updates.email       = email.trim()
     if (description !== undefined) updates.description = description.trim()
     if (address     !== undefined) updates.address     = address.trim()
     if (brandColor  !== undefined) updates.brandColor  = brandColor
 
-    // Logo update: try Cloudinary, fall back to base64
-    if (logoBase64) {
-      const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
-                            process.env.CLOUDINARY_API_KEY    &&
-                            process.env.CLOUDINARY_API_SECRET
-      if (hasCloudinary) {
+    const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
+                          process.env.CLOUDINARY_API_KEY    &&
+                          process.env.CLOUDINARY_API_SECRET
+
+    // Logo: upload if new base64, keep if existing URL, clear if empty string
+    if (logoInput !== undefined) {
+      if (!logoInput) {
+        updates.logo = ''
+      } else if (logoInput.startsWith('data:')) {
         try {
-          const base64Data = logoBase64.replace(/^data:image\/\w+;base64,/, '')
-          const buffer = Buffer.from(base64Data, 'base64')
-          updates.logo = await uploadImage(buffer, 'gym-logos')
-        } catch {
-          updates.logo = logoBase64
-        }
+          const buffer = Buffer.from(logoInput.replace(/^data:image\/\w+;base64,/, ''), 'base64')
+          updates.logo = hasCloudinary ? await uploadImage(buffer, 'gym-logos') : logoInput
+        } catch { updates.logo = logoInput }
       } else {
-        updates.logo = logoBase64
+        updates.logo = logoInput // existing URL unchanged
       }
+    }
+
+    // Gallery: process each image — upload new ones, keep existing URLs
+    if (Array.isArray(galleryInput)) {
+      const processed = []
+      for (const img of galleryInput.slice(0, 6)) {
+        if (!img) continue
+        if (img.startsWith('data:')) {
+          try {
+            const buffer = Buffer.from(img.replace(/^data:image\/\w+;base64,/, ''), 'base64')
+            processed.push(hasCloudinary ? await uploadImage(buffer, 'gym-gallery') : img)
+          } catch { processed.push(img) }
+        } else {
+          processed.push(img) // existing URL
+        }
+      }
+      updates.gallery = processed
     }
 
     // Re-geocode whenever address/city/country-relevant fields change

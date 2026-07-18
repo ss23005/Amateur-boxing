@@ -13,12 +13,19 @@ const FEATURES = [
 export default function CheckEmail() {
   const location = useLocation()
   const navigate  = useNavigate()
-  const email = location.state?.email ?? 'your inbox'
 
+  const [email, setEmail]         = useState(location.state?.email ?? '')
   const [digits, setDigits]       = useState(['', '', '', '', '', ''])
   const [error, setError]         = useState('')
   const [resendStatus, setResend] = useState(null)
   const [verifying, setVerifying] = useState(false)
+
+  // Wrong email flow
+  const [showEmailFix, setShowEmailFix]       = useState(false)
+  const [newEmail, setNewEmail]               = useState('')
+  const [emailFixError, setEmailFixError]     = useState('')
+  const [emailFixStatus, setEmailFixStatus]   = useState(null) // null | 'saving' | 'done'
+
   const inputs = useRef([])
 
   const handleDigit = (i, value) => {
@@ -73,6 +80,29 @@ export default function CheckEmail() {
       inputs.current[0]?.focus()
     } catch {
       setResend('error')
+    }
+  }
+
+  const handleEmailFix = async (e) => {
+    e.preventDefault()
+    if (!newEmail.trim()) { setEmailFixError('Please enter your email.'); return }
+    setEmailFixStatus('saving')
+    setEmailFixError('')
+    try {
+      const { data } = await api.post('/auth/change-email', { email: newEmail.trim() })
+      setEmail(data.email)
+      setEmailFixStatus('done')
+      setDigits(['', '', '', '', '', ''])
+      setResend(null)
+      setTimeout(() => {
+        setShowEmailFix(false)
+        setEmailFixStatus(null)
+        setNewEmail('')
+        inputs.current[0]?.focus()
+      }, 1800)
+    } catch (err) {
+      setEmailFixError(err.response?.data?.message ?? 'Could not update email. Try again.')
+      setEmailFixStatus(null)
     }
   }
 
@@ -131,9 +161,65 @@ export default function CheckEmail() {
             <h2 className="auth-title" style={{ marginBottom: 8 }}>Check your inbox</h2>
             <p style={{ fontSize: 14, color: 'var(--text-3)', margin: 0 }}>
               We sent a 6-digit code to<br />
-              <strong style={{ color: 'var(--text)' }}>{email}</strong>
+              <strong style={{ color: 'var(--text)' }}>{email || 'your inbox'}</strong>
             </p>
           </div>
+
+          {/* Wrong email section */}
+          {!showEmailFix ? (
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <button
+                type="button"
+                className="btn-link"
+                onClick={() => { setShowEmailFix(true); setNewEmail('') }}
+                style={{ fontSize: 13 }}
+              >
+                Wrong email address?
+              </button>
+            </div>
+          ) : (
+            <div style={{ background: 'var(--surface-2, #f5f5f7)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+              {emailFixStatus === 'done' ? (
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--green, #22c55e)', fontWeight: 600, textAlign: 'center' }}>
+                  ✓ Code sent to {email}
+                </p>
+              ) : (
+                <form onSubmit={handleEmailFix}>
+                  <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Correct your email</p>
+                  <input
+                    className="input"
+                    type="email"
+                    placeholder="correct@email.com"
+                    value={newEmail}
+                    onChange={e => setNewEmail(e.target.value)}
+                    autoFocus
+                    style={{ marginBottom: 8 }}
+                  />
+                  {emailFixError && (
+                    <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--accent)' }}>{emailFixError}</p>
+                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={emailFixStatus === 'saving'}
+                      style={{ flex: 1, padding: '9px 0', fontSize: 13 }}
+                    >
+                      {emailFixStatus === 'saving' ? 'Saving…' : 'Update & Resend'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() => { setShowEmailFix(false); setEmailFixError('') }}
+                      style={{ padding: '9px 14px', fontSize: 13 }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
 
           <form onSubmit={verify}>
             <div className="otp-row" onPaste={handlePaste}>

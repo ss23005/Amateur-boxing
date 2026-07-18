@@ -4,7 +4,7 @@ import User from '../models/User.js'
 import Fighter from '../models/Fighter.js'
 import Gym from '../models/Gym.js'
 import { geocodeGym } from '../utils/geocode.js'
-import { sendVerificationEmail, sendSystemVerificationEmail, sendAdminNewGymEmail } from '../utils/email.js'
+import { sendVerificationEmail, sendSystemVerificationEmail, sendAdminNewGymEmail, sendJoinRequestEmail, sendPasswordResetEmail } from '../utils/email.js'
 import { uploadImage } from '../utils/cloudinary.js'
 import { generateGymSlug } from '../utils/slug.js'
 
@@ -139,6 +139,13 @@ export const register = async (req, res) => {
       emailVerificationExpires: verificationExpires,
       ...fighterFields,
     })
+
+    // Notify gym owner when a fighter signs up with a pending join request
+    if (role === 'fighter' && selectedGymId) {
+      const gymOwner = await User.findOne({ gymId: selectedGymId, role: 'gym' })
+      const gymDoc   = await Gym.findById(selectedGymId)
+      if (gymOwner && gymDoc) sendJoinRequestEmail(gymOwner, user, gymDoc).catch(() => {})
+    }
 
     // Now that we have user._id, link the newly created gym to this owner
     if (newGymId) {
@@ -320,6 +327,79 @@ export const updateMe = async (req, res) => {
     }
 
     res.json(user)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const changeEmail = async (req, res) => {
+  const { email } = req.body
+  if (!email) return res.status(400).json({ message: 'Email required' })
+  try {
+    const user = await User.findById(req.user._id)
+    if (user.emailVerified) return res.status(400).json({ message: 'Email already verified' })
+
+    const taken = await User.findOne({ email: email.toLowerCase().trim(), _id: { $ne: user._id } })
+    if (taken) return res.status(400).json({ message: 'Email already in use' })
+
+    const token   = crypto.randomInt(100000, 1000000).toString()
+    const expires = new Date(Date.now() + 15 * 60 * 1000)
+
+    user.email                     = email.toLowerCase().trim()
+    user.emailVerificationToken    = token
+    user.emailVerificationExpires  = expires
+    await user.save()
+
+    await sendSystemVerificationEmail(user, token)
+    res.json({ message: 'Email updated — verification code sent', email: user.email })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body
+  if (!email) return res.status(400).json({ message: 'Email required' })
+  try {
+    const user = await User.findOne({ email: email.toLowerCase().trim() })
+    // Always return success to avoid email enumeration
+    if (!user) return res.json({ message: 'If that email is registered you will receive a reset link shortly' })
+
+    const resetToken = crypto.randomBytes(32).toString('hex')
+    const hashed     = crypto.createHash('sha256').update(resetToken).digest('hex')
+
+    user.passwordResetToken   = hashed
+    user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+    await user.save()
+
+    const clientUrl  = process.env.CLIENT_URL ?? 'http://localhost:5173'
+    const resetUrl   = `${clientUrl}/reset-password/${resetToken}`
+    await sendPasswordResetEmail(user, resetUrl)
+
+    res.json({ message: 'If that email is registered you will receive a reset link shortly' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const resetPassword = async (req, res) => {
+  const { token } = req.params
+  const { password } = req.body
+  if (!password || password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' })
+  try {
+    const hashed = crypto.createHash('sha256').update(token).digest('hex')
+    const user   = await User.findOne({
+      passwordResetToken:   hashed,
+      passwordResetExpires: { $gt: new Date() },
+    })
+    if (!user) return res.status(400).json({ message: 'Reset link is invalid or has expired' })
+
+    user.password             = password
+    user.passwordResetToken   = null
+    user.passwordResetExpires = null
+    await user.save()
+
+    res.json({ message: 'Password updated successfully' })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

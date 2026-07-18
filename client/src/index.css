@@ -3149,6 +3149,12 @@ main { flex: 1; background: var(--bg); }
   padding-top: 4px;
 }
 
+.gym-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0 20px;
+}
+
 /* ─────────────────────────────────────────────────────
    Fighters page — filter bar
    ───────────────────────────────────────────────────── */

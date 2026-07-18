@@ -662,6 +662,52 @@ export async function sendJoinRequestEmail(gymOwner, fighter, gym) {
   })
 }
 
+export async function sendPasswordResetEmail(user, resetUrl) {
+  if (!process.env.SENDGRID_API_KEY) return
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+  const body = `
+    <h1 style="margin:0 0 6px;font-family:${FONT_BAR};font-size:30px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:${NAVY};line-height:1.1;">Reset your password</h1>
+    <p style="margin:0 0 28px;font-family:${FONT_DM};font-size:15px;color:${TEXT_2};line-height:1.65;">
+      Hi <strong style="color:${TEXT};font-weight:600;">${esc(user.name)}</strong>,<br><br>
+      We received a request to reset the password for your ${APP} account.
+      Click the button below — the link expires in <strong>1 hour</strong>.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px;">
+      <tr>
+        <td style="background:${RED};border-radius:8px;padding:0;">
+          <a href="${resetUrl}" style="display:inline-block;padding:13px 28px;font-family:${FONT_BAR};font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${WHITE};text-decoration:none;">Reset Password</a>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px;">
+      <tr>
+        <td style="background:#f5f5f5;border:1px solid ${BORDER};border-radius:8px;padding:14px 18px;">
+          <p style="margin:0 0 4px;font-family:${FONT_DM};font-size:11px;font-weight:600;color:${TEXT_3};text-transform:uppercase;letter-spacing:0.5px;">Or copy this link</p>
+          <p style="margin:0;font-family:${FONT_DM};font-size:12px;color:${TEXT_2};word-break:break-all;">${resetUrl}</p>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:16px;">
+      <tr><td style="height:1px;background:${BORDER};font-size:0;">&nbsp;</td></tr>
+    </table>
+
+    <p style="margin:0;font-family:${FONT_DM};font-size:12px;color:#aeaeb2;line-height:1.6;">
+      If you didn't request a password reset, you can safely ignore this email — your password won't change.
+    </p>
+  `
+
+  await sgMail.send({
+    to:      user.email,
+    from:    { email: process.env.FROM_EMAIL, name: APP },
+    subject: `Reset your ${APP} password`,
+    html:    systemBaseTemplate({ preheader: `Reset your ${APP} password — link expires in 1 hour.`, body }),
+  })
+}
+
 export async function sendAdminNewGymEmail(gym, owner) {
   if (!process.env.SENDGRID_API_KEY) return
   if (!process.env.ADMIN_EMAIL) return

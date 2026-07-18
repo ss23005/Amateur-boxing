@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
-import { register, login, getMe, updateMe, checkEmail, checkUsername, verifyEmail, resendVerification } from '../controllers/authController.js'
+import { register, login, getMe, updateMe, checkEmail, checkUsername, verifyEmail, resendVerification, changeEmail, forgotPassword, resetPassword } from '../controllers/authController.js'
 import protect from '../middleware/authMiddleware.js'
 
 // Strict: login + register — 10 attempts per 15 minutes per IP
@@ -40,5 +40,8 @@ router.get('/me',                   protect,       getMe)
 router.put('/me',                   protect,       updateMe)
 router.post('/verify-email',        protect,       verifyEmail)
 router.post('/resend-verification', protect, resendLimiter, resendVerification)
+router.post('/change-email',        protect,       changeEmail)
+router.post('/forgot-password',     authLimiter,   forgotPassword)
+router.post('/reset-password/:token',              resetPassword)
 
 export default router
