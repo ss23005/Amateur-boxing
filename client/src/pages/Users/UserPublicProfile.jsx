@@ -133,7 +133,12 @@ export default function UserPublicProfile() {
 
         {/* ── Name header ── */}
         <div className="fp2-header" style={accentColor ? { borderBottomColor: `${accentColor}40` } : {}}>
-          <div className="fp2-avatar fp2-avatar--top" style={accentColor ? { background: accentColor } : {}}>{initials}</div>
+          <div className="fp2-avatar fp2-avatar--top" style={accentColor && !profile.avatar ? { background: accentColor } : {}}>
+            {profile.avatar
+              ? <img src={profile.avatar} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+              : initials
+            }
+          </div>
           <h1 className="fp2-name">{profile.name}</h1>
           <p className="fp2-division">
             {ROLE_LABEL[profile.role] ?? 'Member'}
@@ -166,7 +171,12 @@ export default function UserPublicProfile() {
               </div>
             )}
 
-            <div className="fp2-avatar fp2-avatar--side" style={accentColor ? { background: accentColor } : {}}>{initials}</div>
+            <div className="fp2-avatar fp2-avatar--side" style={accentColor && !profile.avatar ? { background: accentColor } : {}}>
+              {profile.avatar
+                ? <img src={profile.avatar} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                : initials
+              }
+            </div>
 
             {me && !isOwnProfile && (
               <button
