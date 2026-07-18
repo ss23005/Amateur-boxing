@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { TutorialContext } from '../../context/TutorialContext'
 import api from '../../services/api'
 import logo from '../../assets/Amateur-Boxing-Logo.png'
+import AvatarPicker from '../../components/common/AvatarPicker'
 
 const MENS_WEIGHT_CLASSES = [
   { value: 'Minimumweight',      label: 'Minimumweight (Up to 49 kg / 108 lbs)' },
@@ -49,8 +50,10 @@ export default function PreSignup() {
   if (!authLoading && user) return <Navigate to="/feed" replace />
 
   const [step, setStep] = useState(1)
+  const [showAvatarPick, setShowAvatarPick] = useState(false)
   const [form, setForm] = useState({
     name: '', username: '', email: '', password: '',
+    avatar: '',
     role: '',
     // Fighter fields
     gender: '', weightClass: '', wins: '', losses: '', draws: '',
@@ -400,10 +403,49 @@ export default function PreSignup() {
                 />
                 {fieldVal.password && <p className={`field-val field-val--${fieldVal.password.type}`}>{fieldVal.password.msg}</p>}
               </div>
+
+              {/* Avatar picker */}
+              <div className="form-group">
+                <label className="form-label">Profile Picture <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(optional)</span></label>
+                <div className="avatar-signup-row">
+                  <div className="avatar-signup-preview">
+                    {form.avatar
+                      ? <img src={form.avatar} alt="avatar" />
+                      : (form.name ? form.name.charAt(0).toUpperCase() : '?')
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setShowAvatarPick(true)}
+                  >
+                    {form.avatar ? 'Change' : 'Choose Avatar'}
+                  </button>
+                  {form.avatar && (
+                    <button
+                      type="button"
+                      className="btn-link"
+                      style={{ fontSize: 12 }}
+                      onClick={() => setForm(prev => ({ ...prev, avatar: '' }))}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
                 {loading ? 'Checking…' : 'Next →'}
               </button>
             </form>
+          )}
+
+          {showAvatarPick && (
+            <AvatarPicker
+              selected={form.avatar}
+              onSelect={(url) => setForm(prev => ({ ...prev, avatar: url }))}
+              onClose={() => setShowAvatarPick(false)}
+            />
           )}
 
           {/* ── Step 2: Role ── */}

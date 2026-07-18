@@ -14,7 +14,7 @@ const generateToken = (id) =>
 export const register = async (req, res) => {
   const {
     name, username, email, password, role, gender, weightClass, wins, losses, draws,
-    location, gym, age,
+    location, gym, age, avatar,
     gymAddress, gymCity, gymPostcode, gymCountry, gymPhone, gymWebsite, gymDescription,
     selectedGymId, gymBrandColor, gymLogo, gymGallery,
     source,
@@ -137,6 +137,7 @@ export const register = async (req, res) => {
       status: userStatus,
       emailVerificationToken:   verificationToken,
       emailVerificationExpires: verificationExpires,
+      ...(avatar ? { avatar } : {}),
       ...fighterFields,
     })
 
@@ -289,7 +290,7 @@ export const resendVerification = async (req, res) => {
 
 export const updateMe = async (req, res) => {
   try {
-    const { name, gender, weightClass, wins, losses, draws, location, gym, age, stance } = req.body
+    const { name, gender, weightClass, wins, losses, draws, location, gym, age, stance, avatar } = req.body
 
     const updates = {}
     if (name        !== undefined) updates.name        = name
@@ -299,6 +300,7 @@ export const updateMe = async (req, res) => {
     if (gym         !== undefined) updates.gym         = gym
     if (age         !== undefined) updates.age         = age ? Number(age) : undefined
     if (stance      !== undefined) updates.stance      = stance
+    if (avatar      !== undefined) updates.avatar      = avatar
     if (wins        !== undefined) updates['record.wins']   = Number(wins)   || 0
     if (losses      !== undefined) updates['record.losses'] = Number(losses) || 0
     if (draws       !== undefined) updates['record.draws']  = Number(draws)  || 0
