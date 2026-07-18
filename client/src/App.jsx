@@ -142,7 +142,12 @@ function Navbar() {
           <>
             <NotificationBell />
             <NavLink to="/account" className="navbar-account-btn">
-              <span className="navbar-account-avatar">{user.name.charAt(0).toUpperCase()}</span>
+              <span className="navbar-account-avatar">
+                {user.avatar
+                  ? <img src={user.avatar} alt={user.name} />
+                  : user.name.charAt(0).toUpperCase()
+                }
+              </span>
               <span className="navbar-username">{user.name}</span>
             </NavLink>
           </>
