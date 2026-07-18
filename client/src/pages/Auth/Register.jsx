@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { TutorialContext } from '../../context/TutorialContext'
 import api from '../../services/api'
-import logo from '../../assets/logo.svg'
+import logo from '../../assets/Amateur-Boxing-Logo.png'
 
 const MENS_WEIGHT_CLASSES = [
   { value: 'Minimumweight',     label: 'Minimumweight (Up to 49 kg / 108 lbs)' },

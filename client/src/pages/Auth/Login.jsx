@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import logo from '../../assets/logo.svg'
+import logo from '../../assets/Amateur-Boxing-Logo.png'
 
 export default function Login() {
   const { login } = useAuth()

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
-import logo from '../../assets/logo.svg'
+import logo from '../../assets/Amateur-Boxing-Logo.png'
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams()

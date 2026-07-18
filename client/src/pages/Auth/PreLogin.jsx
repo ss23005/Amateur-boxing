@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import logo from '../../assets/logo.svg'
+import logo from '../../assets/Amateur-Boxing-Logo.png'
 
 const FEATURES = [
   { text: 'Track your record & career' },

@@ -6,7 +6,7 @@ import { useAuth } from './hooks/useAuth'
 import Tutorial from './components/Tutorial/Tutorial'
 import routes from './routes'
 import api from './services/api'
-import logo from './assets/logo.svg'
+import logo from './assets/Amateur-Boxing-Logo.png'
 
 function RootRedirect() {
   const { user, loading } = useAuth()
