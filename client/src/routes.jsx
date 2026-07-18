@@ -27,7 +27,7 @@ const routes = [
 
   // ── App (with nav) ──
   { path: '/feed',                  element: <ProtectedRoute><Feed /></ProtectedRoute> },
-  { path: '/account',               element: <ProtectedRoute><Account /></ProtectedRoute> },
+  { path: '/account',               element: <ProtectedRoute><Account /></ProtectedRoute>,                                noNav: true },
   { path: '/discover',              element: <ProtectedRoute><Discover /></ProtectedRoute>,                    noNav: true },
   { path: '/fighters',              element: <ProtectedRoute><FighterDirectory /></ProtectedRoute>,            noNav: true },
   { path: '/gyms',                  element: <ProtectedRoute><GymDirectory /></ProtectedRoute> },
