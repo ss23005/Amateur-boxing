@@ -5802,6 +5802,7 @@ main { flex: 1; background: var(--bg); }
   font-weight: 800;
   letter-spacing: -2px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  overflow: hidden;
 }
 
 /* Mobile avatar sits above the name; desktop avatar sits in the left column */

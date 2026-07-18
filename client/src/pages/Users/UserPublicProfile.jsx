@@ -135,7 +135,7 @@ export default function UserPublicProfile() {
         <div className="fp2-header" style={accentColor ? { borderBottomColor: `${accentColor}40` } : {}}>
           <div className="fp2-avatar fp2-avatar--top" style={accentColor && !profile.avatar ? { background: accentColor } : {}}>
             {profile.avatar
-              ? <img src={profile.avatar} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+              ? <img src={profile.avatar} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               : initials
             }
           </div>
@@ -173,7 +173,7 @@ export default function UserPublicProfile() {
 
             <div className="fp2-avatar fp2-avatar--side" style={accentColor && !profile.avatar ? { background: accentColor } : {}}>
               {profile.avatar
-                ? <img src={profile.avatar} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                ? <img src={profile.avatar} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 : initials
               }
             </div>
