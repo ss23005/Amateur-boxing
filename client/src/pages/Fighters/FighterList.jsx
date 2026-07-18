@@ -47,6 +47,17 @@ function XIcon({ size = 14 }) {
 export default function FighterList() {
   const { data: fighters, loading, error } = useFetch('/fighters')
   const { user } = useAuth()
+  const { data: myFighter, error: myFighterError } = useFetch(user ? '/fighters/me' : null)
+
+  console.log('[YOU debug]', {
+    userRole: user?.role,
+    userId: user?._id,
+    userName: user?.name,
+    userUsername: user?.username,
+    myFighter: myFighter?._id,
+    myFighterError,
+    fighterUserIds: fighters?.map(f => ({ name: f.name, userId: f.user?._id }))
+  })
 
   const [search,      setSearch]      = useState('')
   const [gender,      setGender]      = useState('')
@@ -226,11 +237,10 @@ export default function FighterList() {
 
           {filtered.map((f, index) => {
             const { wins = 0, losses = 0, draws = 0 } = f.record ?? {}
-            const initial  = f.name.charAt(0).toUpperCase()
-            const rank     = index + 1
-            const location = f.location || f.user?.location || f.stats?.nationality || '—'
-            const isYou    = user && f.user &&
-              String(f.user._id) === String(user._id)
+            const initial   = f.name.charAt(0).toUpperCase()
+            const rank      = index + 1
+            const location  = f.location || f.user?.location || f.stats?.nationality || '—'
+            const isYou     = myFighter ? String(f._id) === String(myFighter._id) : false
             const avatarUrl = isYou ? user.avatar : f.user?.avatar
 
             return (

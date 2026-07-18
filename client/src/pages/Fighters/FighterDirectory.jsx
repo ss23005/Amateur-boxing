@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useFetch } from '../../hooks/useFetch'
+import { useAuth } from '../../hooks/useAuth'
 
-function FighterCard({ user }) {
+function FighterCard({ user, isYou }) {
   const { record, weightClass, location } = user
   const wins   = record?.wins   ?? 0
   const losses = record?.losses ?? 0
@@ -10,8 +11,26 @@ function FighterCard({ user }) {
   const initial = (user.name ?? '?').charAt(0).toUpperCase()
 
   return (
-    <Link to={`/users/${user.username}`} className="user-card">
-      <div className="user-card-avatar">{initial}</div>
+    <Link
+      to={`/users/${user.username}`}
+      className="user-card"
+      style={isYou ? { border: '2px solid var(--accent)', boxShadow: '0 0 0 3px rgba(225,29,72,0.10)' } : {}}
+    >
+      <div className="user-card-avatar" style={{ position: 'relative', overflow: 'hidden' }}>
+        {user.avatar
+          ? <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+          : initial
+        }
+        {isYou && (
+          <span style={{
+            position: 'absolute', bottom: 0, right: 0,
+            background: 'var(--accent)', color: '#fff',
+            fontSize: 9, fontWeight: 800, fontFamily: 'var(--display)',
+            padding: '1px 5px', borderRadius: 4, letterSpacing: 0.5,
+            textTransform: 'uppercase', lineHeight: '14px',
+          }}>YOU</span>
+        )}
+      </div>
       <div className="user-card-name">{user.name}</div>
       {user.username && <div className="user-card-username">@{user.username}</div>}
       <span className="user-card-role-badge" style={{ background: 'rgba(232,25,44,0.10)', color: '#c0101f' }}>
@@ -49,6 +68,7 @@ function FighterCard({ user }) {
 
 export default function FighterDirectory() {
   const { data: users, loading, error } = useFetch('/users/public')
+  const { user: currentUser } = useAuth()
   const [search, setSearch] = useState('')
 
   const fighters = useMemo(() => {
@@ -118,7 +138,13 @@ export default function FighterDirectory() {
             </div>
           ) : (
             <div className="user-grid">
-              {fighters.map(u => <FighterCard key={u._id} user={u} />)}
+              {fighters.map(u => (
+                <FighterCard
+                  key={u._id}
+                  user={u}
+                  isYou={currentUser ? String(u._id) === String(currentUser._id) : false}
+                />
+              ))}
             </div>
           )
         )}

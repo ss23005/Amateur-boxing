@@ -2,6 +2,7 @@ import { Router } from 'express'
 import {
   getFighters,
   getFighterById,
+  getMyFighterProfile,
   createFighter,
   updateFighter,
   deleteFighter,
@@ -12,6 +13,7 @@ import protect from '../middleware/authMiddleware.js'
 const router = Router()
 
 router.get('/', getFighters)
+router.get('/me', protect, getMyFighterProfile)
 router.get('/:id', getFighterById)
 router.post('/', protect, createFighter)
 // Called automatically on login if the user is a fighter with no Fighter doc yet
