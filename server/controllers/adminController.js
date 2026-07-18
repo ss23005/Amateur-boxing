@@ -325,7 +325,7 @@ export const getPendingUsers = async (req, res) => {
   try {
     const users = await User.find({
       status: { $in: ['pending', 'denied'] },
-      role:   { $in: ['fighter', 'coach'] },
+      role:   { $in: ['fighter', 'gym'] },
     })
       .sort({ createdAt: -1 })
       .select('-password')
@@ -424,6 +424,46 @@ export const denyGym = async (req, res) => {
 
     if (gym.createdBy) sendGymDenialEmail(gym.createdBy, gym, message ?? '').catch(() => {})
     res.json(gym)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const getAllJoinRequests = async (req, res) => {
+  try {
+    const requests = await User.find({ gymJoinStatus: 'pending', role: 'fighter' })
+      .select('name username avatar record weightClass location gymId gymJoinStatus createdAt')
+      .populate('gymId', 'name city slug')
+      .sort({ createdAt: -1 })
+    res.json(requests)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const adminApproveJoinRequest = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { $set: { gymJoinStatus: 'approved' } },
+      { new: true }
+    ).select('-password')
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    res.json(user)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const adminRejectJoinRequest = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { $set: { gymId: null, gymJoinStatus: 'rejected' } },
+      { new: true }
+    ).select('-password')
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    res.json(user)
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

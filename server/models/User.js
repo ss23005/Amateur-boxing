@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     username: { type: String, unique: true, sparse: true, trim: true, lowercase: true },
     email:    { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true, minlength: 6 },
-    role: { type: String, enum: ['fan', 'fighter', 'coach', 'admin', 'superadmin'], default: 'fan' },
+    role: { type: String, enum: ['fan', 'fighter', 'gym', 'admin', 'superadmin'], default: 'fan' },
     avatar: { type: String, default: '' },
     // Fighter profile fields
     gender:      { type: String, enum: ['male', 'female', ''], default: '' },
@@ -21,7 +21,8 @@ const userSchema = new mongoose.Schema(
     gym:      { type: String, default: '' },
     age:      { type: Number },
     stance:   { type: String, enum: ['orthodox', 'southpaw', 'switch', ''], default: '' },
-    gymId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Gym', default: null },
+    gymId:          { type: mongoose.Schema.Types.ObjectId, ref: 'Gym', default: null },
+    gymJoinStatus:  { type: String, enum: ['pending', 'approved', 'rejected', ''], default: '' },
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     emailVerified:           { type: Boolean, default: false },

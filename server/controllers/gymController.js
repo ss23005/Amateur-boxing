@@ -2,6 +2,7 @@ import Gym from '../models/Gym.js'
 import User from '../models/User.js'
 import { geocodeGym } from '../utils/geocode.js'
 import { uploadImage } from '../utils/cloudinary.js'
+import { sendJoinRequestEmail } from '../utils/email.js'
 
 export const getGyms = async (req, res) => {
   try {
@@ -26,7 +27,7 @@ export const getGyms = async (req, res) => {
     // Attach approved member counts without N+1 queries
     const gymIds = gyms.map(g => g._id)
     const counts = await User.aggregate([
-      { $match: { gymId: { $in: gymIds }, status: 'approved' } },
+      { $match: { gymId: { $in: gymIds }, status: 'approved', gymJoinStatus: 'approved' } },
       { $group: { _id: { gymId: '$gymId', role: '$role' }, n: { $sum: 1 } } },
     ])
     const countMap = {}
@@ -34,7 +35,7 @@ export const getGyms = async (req, res) => {
       const key = String(gymId)
       if (!countMap[key]) countMap[key] = { fighterCount: 0, coachCount: 0 }
       if (role === 'fighter') countMap[key].fighterCount = n
-      if (role === 'coach')   countMap[key].coachCount   = n
+      if (role === 'gym')     countMap[key].coachCount   = n
     }
 
     const result = gyms.map(g => ({
@@ -125,10 +126,88 @@ export const getGym = async (req, res) => {
     if (!gym) return res.status(404).json({ message: 'Gym not found' })
 
     const members = await User.find({ gymId: gym._id, status: 'approved' }).select('-password')
-    const coaches  = members.filter((m) => m.role === 'coach')
-    const fighters = members.filter((m) => m.role === 'fighter')
+    const coaches  = members.filter((m) => m.role === 'gym')
+    const fighters = members.filter((m) => m.role === 'fighter' && m.gymJoinStatus === 'approved')
 
     res.json({ ...gym.toObject(), coaches, fighters })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const getJoinRequests = async (req, res) => {
+  try {
+    const gym = await Gym.findById(req.params.id)
+    if (!gym) return res.status(404).json({ message: 'Gym not found' })
+    if (!req.user.gymId || String(req.user.gymId) !== String(gym._id)) {
+      return res.status(403).json({ message: 'Not authorised' })
+    }
+    const requests = await User.find({
+      gymId: gym._id,
+      gymJoinStatus: 'pending',
+      role: 'fighter',
+    }).select('name username avatar role record weightClass location gymJoinStatus createdAt')
+    res.json(requests)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const approveJoinRequest = async (req, res) => {
+  try {
+    const gym = await Gym.findById(req.params.id)
+    if (!gym) return res.status(404).json({ message: 'Gym not found' })
+    if (!req.user.gymId || String(req.user.gymId) !== String(gym._id)) {
+      return res.status(403).json({ message: 'Not authorised' })
+    }
+    const fighter = await User.findOneAndUpdate(
+      { _id: req.params.userId, gymId: gym._id, gymJoinStatus: 'pending' },
+      { $set: { gymJoinStatus: 'approved' } },
+      { new: true }
+    )
+    if (!fighter) return res.status(404).json({ message: 'Request not found' })
+    res.json({ message: 'Approved' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const rejectJoinRequest = async (req, res) => {
+  try {
+    const gym = await Gym.findById(req.params.id)
+    if (!gym) return res.status(404).json({ message: 'Gym not found' })
+    if (!req.user.gymId || String(req.user.gymId) !== String(gym._id)) {
+      return res.status(403).json({ message: 'Not authorised' })
+    }
+    await User.findOneAndUpdate(
+      { _id: req.params.userId, gymId: gym._id, gymJoinStatus: 'pending' },
+      { $set: { gymId: null, gymJoinStatus: 'rejected' } }
+    )
+    res.json({ message: 'Rejected' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+export const requestJoin = async (req, res) => {
+  try {
+    if (req.user.role !== 'fighter') {
+      return res.status(403).json({ message: 'Only fighters can request to join a gym' })
+    }
+    const gym = await Gym.findById(req.params.id)
+    if (!gym) return res.status(404).json({ message: 'Gym not found' })
+    if (req.user.gymJoinStatus === 'pending' || req.user.gymJoinStatus === 'approved') {
+      return res.status(400).json({ message: 'Already in or pending a gym' })
+    }
+    await User.findByIdAndUpdate(req.user._id, {
+      $set: { gymId: gym._id, gymJoinStatus: 'pending' },
+    })
+
+    // Notify the gym owner
+    const gymOwner = await User.findOne({ gymId: gym._id, role: 'gym' })
+    if (gymOwner) sendJoinRequestEmail(gymOwner, req.user, gym).catch(() => {})
+
+    res.json({ message: 'Request sent' })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }

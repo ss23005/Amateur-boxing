@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../../services/api'
+import { useAuth } from '../../hooks/useAuth'
 
 function MemberCard({ member, clubColor }) {
   const initial   = (member.name ?? '?').charAt(0).toUpperCase()
@@ -26,7 +27,7 @@ function MemberCard({ member, clubColor }) {
               : { background: 'rgba(10,36,99,0.10)',  color: '#0a2463' }
         }
       >
-        {isFighter ? 'Fighter' : 'Coach'}
+        {isFighter ? 'Fighter' : 'Gym'}
       </span>
       {isFighter && (
         <>
@@ -59,16 +60,38 @@ function MemberCard({ member, clubColor }) {
 
 export default function GymPublicProfile() {
   const { slug } = useParams()
-  const [gym,     setGym]     = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState(null)
+  const { user } = useAuth()
+  const [gym,        setGym]        = useState(null)
+  const [loading,    setLoading]    = useState(true)
+  const [error,      setError]      = useState(null)
+  const [joinStatus, setJoinStatus] = useState(null) // null | 'pending' | 'approved'
+  const [joining,    setJoining]    = useState(false)
 
   useEffect(() => {
     setLoading(true)
     api.get(`/gyms/${slug}`)
-      .then(({ data }) => { setGym(data); setLoading(false) })
+      .then(({ data }) => {
+        setGym(data)
+        setLoading(false)
+        // Set initial join status from current user context
+        if (user && user.gymId && String(user.gymId) === String(data._id)) {
+          setJoinStatus(user.gymJoinStatus || 'pending')
+        }
+      })
       .catch(() => { setError('Gym not found'); setLoading(false) })
-  }, [slug])
+  }, [slug, user])
+
+  const handleRequestJoin = async () => {
+    setJoining(true)
+    try {
+      await api.post(`/gyms/${gym._id}/join`)
+      setJoinStatus('pending')
+    } catch (err) {
+      alert(err?.response?.data?.message ?? 'Could not send request.')
+    } finally {
+      setJoining(false)
+    }
+  }
 
   if (loading) return <div className="br-shell"><div className="loading-state">Loading gym…</div></div>
 
@@ -80,9 +103,16 @@ export default function GymPublicProfile() {
 
   const fighters   = gym.fighters ?? []
   const coaches    = gym.coaches  ?? []
+  const gallery    = gym.gallery  ?? []
   const initial    = gym.name.charAt(0).toUpperCase()
   const clubColor  = gym.brandColor || null
   const accentColor = clubColor || '#0a2463'
+
+  const isFighter    = user?.role === 'fighter'
+  const isGymOwner   = user?.role === 'gym' && user?.gymId && String(user.gymId) === String(gym._id)
+  const alreadyMember = joinStatus === 'approved' || (user?.gymId && String(user.gymId) === String(gym._id) && joinStatus === 'approved')
+  const isPending    = joinStatus === 'pending'
+  const canRequest   = isFighter && !alreadyMember && !isPending && (!user?.gymId || String(user.gymId) !== String(gym._id))
 
   return (
     <div className="br-shell">
@@ -92,13 +122,17 @@ export default function GymPublicProfile() {
 
       <div className="fp2-pub-topbar">
         <Link to="/discover" className="back-link" style={{ color: 'var(--text-3)' }}>← Discover</Link>
+        {isGymOwner && (
+          <Link to="/account" style={{ fontSize: 13, color: accentColor, fontWeight: 600, textDecoration: 'none' }}>
+            Manage Gym →
+          </Link>
+        )}
       </div>
 
       <div className="page fp2-page fp2-pub-page">
 
         {/* Header */}
         <div className="fp2-header">
-          {/* Club logo or coloured initial */}
           <div className="gym-profile-logo-wrap">
             {gym.logo ? (
               <img src={gym.logo} alt={gym.name} className="gym-profile-logo-img" />
@@ -119,6 +153,22 @@ export default function GymPublicProfile() {
             <p className="fp2-username-sub">{gym.address}</p>
           )}
 
+          {/* Request to Join */}
+          {canRequest && (
+            <button
+              onClick={handleRequestJoin}
+              disabled={joining}
+              style={{ marginTop: 16, padding: '10px 24px', background: accentColor, color: '#fff', border: 'none', borderRadius: 8, fontFamily: 'var(--display)', fontWeight: 700, fontSize: 14, letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer' }}
+            >
+              {joining ? 'Sending…' : 'Request to Join'}
+            </button>
+          )}
+          {isPending && (
+            <div style={{ marginTop: 16, padding: '10px 20px', background: 'rgba(10,36,99,0.08)', borderRadius: 8, fontSize: 13, color: '#0a2463', fontWeight: 600 }}>
+              Join request pending — waiting for gym approval
+            </div>
+          )}
+
           {/* Stat pills */}
           <div className="gym-profile-stats-row">
             <div className="gym-profile-stat" style={{ borderColor: accentColor }}>
@@ -127,7 +177,7 @@ export default function GymPublicProfile() {
             </div>
             <div className="gym-profile-stat" style={{ borderColor: accentColor }}>
               <span className="gym-profile-stat-num" style={{ color: accentColor }}>{coaches.length}</span>
-              <span className="gym-profile-stat-label">Coaches</span>
+              <span className="gym-profile-stat-label">Staff</span>
             </div>
           </div>
         </div>
@@ -152,6 +202,25 @@ export default function GymPublicProfile() {
           </div>
         )}
 
+        {/* Gallery */}
+        {gallery.length > 0 && (
+          <div style={{ marginTop: 40 }}>
+            <div className="discover-section-header">
+              <h2 className="discover-section-title" style={{ color: accentColor }}>Gallery</h2>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8, marginTop: 12 }}>
+              {gallery.map((img, i) => (
+                <img
+                  key={i}
+                  src={img}
+                  alt={`${gym.name} photo ${i + 1}`}
+                  style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 8, display: 'block' }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Active fighters */}
         <div className="discover-section-header" style={{ marginTop: 48 }}>
           <h2 className="discover-section-title" style={{ color: accentColor }}>Active Fighters</h2>
@@ -168,20 +237,17 @@ export default function GymPublicProfile() {
           </div>
         )}
 
-        {/* Coaching staff */}
-        <div className="discover-section-header" style={{ marginTop: 48 }}>
-          <h2 className="discover-section-title" style={{ color: accentColor }}>Coaching Staff</h2>
-          <span className="discover-section-count">{coaches.length} coach{coaches.length !== 1 ? 'es' : ''}</span>
-        </div>
-
-        {coaches.length === 0 ? (
-          <div className="empty-state" style={{ paddingTop: 24, paddingBottom: 24 }}>
-            <p className="empty-state-title">No coaches registered yet</p>
-          </div>
-        ) : (
-          <div className="user-grid">
-            {coaches.map(c => <MemberCard key={c._id} member={c} clubColor={clubColor} />)}
-          </div>
+        {/* Gym staff */}
+        {coaches.length > 0 && (
+          <>
+            <div className="discover-section-header" style={{ marginTop: 48 }}>
+              <h2 className="discover-section-title" style={{ color: accentColor }}>Gym Staff</h2>
+              <span className="discover-section-count">{coaches.length} member{coaches.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="user-grid">
+              {coaches.map(c => <MemberCard key={c._id} member={c} clubColor={clubColor} />)}
+            </div>
+          </>
         )}
 
       </div>

@@ -6,7 +6,7 @@ import api from '../../services/api'
 const ROLE_LABELS = {
   fan:     'Fan',
   fighter: 'Fighter',
-  coach:   'Coach',
+  gym:     'Gym',
   admin:   'Admin',
 }
 
@@ -203,6 +203,9 @@ export default function Account() {
   const [gymError,   setGymError]   = useState('')
   const [gymSuccess, setGymSuccess] = useState(false)
 
+  const [joinRequests,        setJoinRequests]        = useState([])
+  const [joinRequestsLoading, setJoinRequestsLoading] = useState(false)
+
   useEffect(() => {
     api.get('/users/me/social').then(({ data }) => setSocial(data)).catch(() => {})
   }, [])
@@ -212,6 +215,26 @@ export default function Account() {
       api.get(`/gyms/${user.gymId}`).then(({ data }) => setGym(data)).catch(() => {})
     }
   }, [user?.gymId])
+
+  useEffect(() => {
+    if (user?.role === 'gym' && user?.gymId) {
+      setJoinRequestsLoading(true)
+      api.get(`/gyms/${user.gymId}/join-requests`)
+        .then(({ data }) => setJoinRequests(data))
+        .catch(() => {})
+        .finally(() => setJoinRequestsLoading(false))
+    }
+  }, [user?.gymId, user?.role])
+
+  const handleApproveRequest = async (userId) => {
+    await api.post(`/gyms/${user.gymId}/join-requests/${userId}/approve`)
+    setJoinRequests(prev => prev.filter(r => r._id !== userId))
+  }
+
+  const handleRejectRequest = async (userId) => {
+    await api.post(`/gyms/${user.gymId}/join-requests/${userId}/reject`)
+    setJoinRequests(prev => prev.filter(r => r._id !== userId))
+  }
 
   const followingIds = new Set(social.following.map(u => String(u._id)))
 
@@ -250,7 +273,7 @@ export default function Account() {
     }
   }
 
-  const isCoach = user.role === 'coach'
+  const isCoach = user.role === 'gym'
 
   const startGymEdit = () => {
     setGymForm({
@@ -559,6 +582,44 @@ export default function Account() {
                   <Field label="Description" value={gym.description} />
                 </>
               )}
+            </div>
+          )}
+
+          {isCoach && (
+            <div className="account-section">
+              <p className="account-section-label">
+                Fighter Join Requests
+                {joinRequests.length > 0 && (
+                  <span style={{ marginLeft: 8, background: 'var(--accent)', color: '#fff', borderRadius: 12, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                    {joinRequests.length}
+                  </span>
+                )}
+              </p>
+              {joinRequestsLoading && <p style={{ fontSize: 13, color: 'var(--text-3)' }}>Loading…</p>}
+              {!joinRequestsLoading && joinRequests.length === 0 && (
+                <p style={{ fontSize: 13, color: 'var(--text-3)', margin: '8px 0 0' }}>No pending requests.</p>
+              )}
+              {joinRequests.map(r => {
+                const wins   = r.record?.wins   ?? 0
+                const losses = r.record?.losses ?? 0
+                const draws  = r.record?.draws  ?? 0
+                return (
+                  <div key={r._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div>
+                      <p style={{ margin: '0 0 2px', fontWeight: 600, fontSize: 14 }}>{r.name}</p>
+                      {r.username && <p style={{ margin: '0 0 2px', fontSize: 12, color: 'var(--text-3)' }}>@{r.username}</p>}
+                      <p style={{ margin: 0, fontSize: 12, color: 'var(--text-3)' }}>
+                        {wins}W · {losses}L{draws > 0 ? ` · ${draws}D` : ''}
+                        {r.weightClass ? ` · ${r.weightClass}` : ''}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                      <button className="btn btn-sm btn-primary" onClick={() => handleApproveRequest(r._id)}>Approve</button>
+                      <button className="btn btn-sm btn-outline" onClick={() => handleRejectRequest(r._id)}>Reject</button>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
 

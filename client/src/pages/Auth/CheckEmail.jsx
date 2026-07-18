@@ -86,8 +86,8 @@ export default function CheckEmail() {
         <div className="psh-brand-row">
           <img src={logo} alt="Boxing Amateur" className="psh-logo" />
           <div className="psh-brand-text">
-            <span className="psh-brand-abbr">BA</span>
-            <span className="psh-brand-full">Boxing Amateur</span>
+            <span className="psh-brand-abbr">BOXINGAMATEUR.COM</span>
+            <span className="psh-brand-full">Grass roots to greatness</span>
           </div>
         </div>
 

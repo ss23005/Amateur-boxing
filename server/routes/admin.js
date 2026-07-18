@@ -24,6 +24,9 @@ import {
   getPendingGyms,
   approveGym,
   denyGym,
+  getAllJoinRequests,
+  adminApproveJoinRequest,
+  adminRejectJoinRequest,
 } from '../controllers/adminController.js'
 
 const router = express.Router()
@@ -60,5 +63,10 @@ router.put('/pending/users/:id/deny',      denyUser)
 router.get('/pending/gyms',               getPendingGyms)
 router.put('/pending/gyms/:id/approve',   approveGym)
 router.put('/pending/gyms/:id/deny',      denyGym)
+
+// Fighter gym join requests
+router.get('/join-requests',                          getAllJoinRequests)
+router.put('/join-requests/:userId/approve',          adminApproveJoinRequest)
+router.put('/join-requests/:userId/reject',           adminRejectJoinRequest)
 
 export default router

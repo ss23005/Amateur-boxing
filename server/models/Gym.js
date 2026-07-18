@@ -17,6 +17,7 @@ const gymSchema = new mongoose.Schema(
       lng: { type: Number, default: null },
     },
     logo:       { type: String, default: '' },
+    gallery:    [{ type: String }],
     brandColor: { type: String, default: '' },
     status:    { type: String, enum: ['pending', 'approved', 'denied'], default: 'approved' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },

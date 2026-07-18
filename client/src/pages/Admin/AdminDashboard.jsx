@@ -339,7 +339,7 @@ function UploadTab() {
 
 // ── Users Tab ─────────────────────────────────────────────────────────────────
 
-const ROLES = ['fan', 'fighter', 'coach', 'admin', 'superadmin']
+const ROLES = ['fan', 'fighter', 'gym', 'admin', 'superadmin']
 
 function UsersTab() {
   const [users, setUsers]   = useState([])
@@ -768,14 +768,92 @@ function GymsTab() {
   )
 }
 
+// ── Join Requests Tab ────────────────────────────────────────────────────────
+
+function JoinRequestsTab() {
+  const [requests, setRequests] = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [acting,  setActing]    = useState(null)
+
+  const load = useCallback(() => {
+    setLoading(true)
+    api.get('/admin/join-requests')
+      .then(({ data }) => setRequests(data))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const handle = async (userId, action) => {
+    setActing(userId)
+    try {
+      await api.put(`/admin/join-requests/${userId}/${action}`)
+      setRequests(prev => prev.filter(r => r._id !== userId))
+    } catch { /* ignore */ }
+    finally { setActing(null) }
+  }
+
+  return (
+    <div className="adm-requests">
+      <h2 className="adm-section-title">
+        Fighter Gym Join Requests
+        {requests.length > 0 && <span className="adm-count"> ({requests.length} pending)</span>}
+      </h2>
+
+      {loading && <div className="adm-empty-state">Loading…</div>}
+      {!loading && requests.length === 0 && <div className="adm-empty-state">No pending join requests.</div>}
+
+      {requests.map(r => {
+        const wins   = r.record?.wins   ?? 0
+        const losses = r.record?.losses ?? 0
+        const draws  = r.record?.draws  ?? 0
+        const gym    = r.gymId
+        return (
+          <div key={r._id} className="adm-req-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <p style={{ margin: '0 0 4px', fontWeight: 600, fontSize: 15 }}>
+                {r.name}{r.username ? ` (@${r.username})` : ''}
+              </p>
+              <p style={{ margin: '0 0 2px', fontSize: 13, color: 'var(--text-3)' }}>
+                {wins}W · {losses}L{draws > 0 ? ` · ${draws}D` : ''}
+                {r.weightClass ? ` · ${r.weightClass}` : ''}
+              </p>
+              {gym && (
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-3)' }}>
+                  Wants to join: <strong style={{ color: 'var(--navy)' }}>{gym.name}</strong>
+                  {gym.city ? `, ${gym.city}` : ''}
+                </p>
+              )}
+            </div>
+            <div className="adm-req-actions">
+              <button
+                className="btn btn-primary adm-btn-sm"
+                disabled={acting === r._id}
+                onClick={() => handle(r._id, 'approve')}
+              >Approve</button>
+              <button
+                className="btn btn-outline adm-btn-sm"
+                disabled={acting === r._id}
+                onClick={() => handle(r._id, 'reject')}
+              >Reject</button>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 
 const TABS = [
-  { key: 'overview',  label: 'Overview',       Icon: IconChart },
-  { key: 'upload',    label: 'Upload Content',  Icon: IconUpload },
-  { key: 'users',     label: 'Users',           Icon: IconUsers },
-  { key: 'requests',  label: 'Requests',        Icon: IconRequests },
-  { key: 'gyms',      label: 'Gyms',            Icon: IconGym },
+  { key: 'overview',      label: 'Overview',       Icon: IconChart },
+  { key: 'upload',        label: 'Upload Content',  Icon: IconUpload },
+  { key: 'users',         label: 'Users',           Icon: IconUsers },
+  { key: 'requests',      label: 'Requests',        Icon: IconRequests },
+  { key: 'join-requests', label: 'Join Requests',   Icon: IconUsers },
+  { key: 'gyms',          label: 'Gyms',            Icon: IconGym },
 ]
 
 export default function AdminDashboard() {
@@ -820,11 +898,12 @@ export default function AdminDashboard() {
 
         {/* ── Content ── */}
         <main className="adm-content">
-          {tab === 'overview'  && <OverviewTab />}
-          {tab === 'upload'    && <UploadTab />}
-          {tab === 'users'     && <UsersTab />}
-          {tab === 'requests'  && <RequestsTab />}
-          {tab === 'gyms'      && <GymsTab />}
+          {tab === 'overview'      && <OverviewTab />}
+          {tab === 'upload'        && <UploadTab />}
+          {tab === 'users'         && <UsersTab />}
+          {tab === 'requests'      && <RequestsTab />}
+          {tab === 'join-requests' && <JoinRequestsTab />}
+          {tab === 'gyms'          && <GymsTab />}
         </main>
 
       </div>

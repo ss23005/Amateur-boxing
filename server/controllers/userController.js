@@ -115,7 +115,7 @@ export const getPublicUsers = async (req, res) => {
       role:     { $nin: ['superadmin', 'admin'] },
       username: { $exists: true, $ne: null, $ne: '' },
     })
-      .select('name username avatar role weightClass record location age gender gym gymId createdAt followers following')
+      .select('name username avatar role weightClass record location age gender gym gymId gymJoinStatus createdAt followers following')
       .sort({ createdAt: -1 })
       .limit(200)
     res.json(users)

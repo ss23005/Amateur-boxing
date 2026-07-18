@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import api from '../../services/api'
 
-const ROLE_LABEL = { fighter: 'Amateur Fighter', coach: 'Boxing Coach', fan: 'Fan' }
+const ROLE_LABEL = { fighter: 'Amateur Fighter', gym: 'Gym', fan: 'Fan' }
 
 export default function UserPublicProfile() {
   const { username } = useParams()

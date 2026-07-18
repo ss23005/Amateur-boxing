@@ -4,7 +4,7 @@ import User from '../models/User.js'
 import Fighter from '../models/Fighter.js'
 import Gym from '../models/Gym.js'
 import { geocodeGym } from '../utils/geocode.js'
-import { sendVerificationEmail, sendSystemVerificationEmail } from '../utils/email.js'
+import { sendVerificationEmail, sendSystemVerificationEmail, sendAdminNewGymEmail } from '../utils/email.js'
 import { uploadImage } from '../utils/cloudinary.js'
 import { generateGymSlug } from '../utils/slug.js'
 
@@ -16,7 +16,7 @@ export const register = async (req, res) => {
     name, username, email, password, role, gender, weightClass, wins, losses, draws,
     location, gym, age,
     gymAddress, gymCity, gymPostcode, gymCountry, gymPhone, gymWebsite, gymDescription,
-    selectedGymId, gymBrandColor, gymLogo,
+    selectedGymId, gymBrandColor, gymLogo, gymGallery,
     source,
   } = req.body
   try {
@@ -43,13 +43,13 @@ export const register = async (req, res) => {
     let gymId    = null
     let newGymId = null
 
-    // Fighters can link directly to an approved gym
+    // Fighters selecting a gym create a pending join request
     if (role === 'fighter' && selectedGymId) {
       gymId = selectedGymId
     }
 
-    // Coaches: join an existing gym by ID, or create a new pending one
-    if (role === 'coach') {
+    // Gym accounts: join an existing gym by ID, or create a new one
+    if (role === 'gym') {
       if (selectedGymId) {
         // Coach joining an already-approved gym
         gymId = selectedGymId
@@ -88,12 +88,32 @@ export const register = async (req, res) => {
           }
         }
 
+        // Upload gallery images
+        let galleryUrls = []
+        if (Array.isArray(gymGallery) && gymGallery.length > 0) {
+          const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
+                                process.env.CLOUDINARY_API_KEY    &&
+                                process.env.CLOUDINARY_API_SECRET
+          for (const imgData of gymGallery.slice(0, 6)) {
+            try {
+              if (hasCloudinary) {
+                const base64Data = imgData.replace(/^data:image\/\w+;base64,/, '')
+                const buffer = Buffer.from(base64Data, 'base64')
+                galleryUrls.push(await uploadImage(buffer, 'gym-gallery'))
+              } else {
+                galleryUrls.push(imgData)
+              }
+            } catch { /* skip failed uploads */ }
+          }
+        }
+
         const slug = await generateGymSlug(gymData.name)
         const gymDoc = await Gym.create({
           ...gymData,
           slug,
-          logo:   logoUrl,
-          status: 'approved',
+          logo:    logoUrl,
+          gallery: galleryUrls,
+          status:  'approved',
           ...(coords ? { coordinates: coords } : {}),
         })
         newGymId = gymDoc._id
@@ -113,15 +133,19 @@ export const register = async (req, res) => {
       password,
       role,
       gymId,
+      gymJoinStatus: (role === 'fighter' && selectedGymId) ? 'pending' : '',
       status: userStatus,
       emailVerificationToken:   verificationToken,
       emailVerificationExpires: verificationExpires,
       ...fighterFields,
     })
 
-    // Now that we have user._id, link the newly created gym to this coach
+    // Now that we have user._id, link the newly created gym to this owner
     if (newGymId) {
       await Gym.findByIdAndUpdate(newGymId, { createdBy: user._id })
+      // Notify admin of new gym sign-up
+      const gymDoc = await Gym.findById(newGymId)
+      if (gymDoc) sendAdminNewGymEmail(gymDoc, user).catch(() => {})
     }
 
     if (role === 'fighter') {

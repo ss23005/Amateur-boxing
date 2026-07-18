@@ -385,7 +385,7 @@ export async function sendApprovalEmail(user) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
   const clientUrl = process.env.CLIENT_URL ?? 'https://boxingamateur.com'
-  const roleLabel = user.role === 'coach' ? 'coach' : 'fighter'
+  const roleLabel = user.role === 'gym' ? 'gym' : 'fighter'
 
   const body = `
     <h1 style="margin:0 0 8px;font-family:${FONT_BAR};font-size:30px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:${NAVY};line-height:1.1;">You're approved!</h1>
@@ -424,7 +424,7 @@ export async function sendDenialEmail(user, message) {
   if (!process.env.SENDGRID_API_KEY) return
   sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
-  const roleLabel = user.role === 'coach' ? 'coach' : 'fighter'
+  const roleLabel = user.role === 'gym' ? 'gym' : 'fighter'
 
   const body = `
     <h1 style="margin:0 0 8px;font-family:${FONT_BAR};font-size:30px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:${NAVY};line-height:1.1;">Account update</h1>
@@ -510,7 +510,7 @@ export async function sendFollowerNotificationEmail(recipient, follower) {
 
   const clientUrl  = process.env.CLIENT_URL ?? 'https://boxingamateur.com'
   const initial    = esc((follower.name ?? '?').charAt(0).toUpperCase())
-  const ROLE_LABEL = { fighter: 'Amateur Fighter', coach: 'Boxing Coach', fan: 'Fan' }
+  const ROLE_LABEL = { fighter: 'Amateur Fighter', gym: 'Gym', fan: 'Fan' }
   const roleLabel  = ROLE_LABEL[follower.role] ?? 'Member'
 
   const body = `
@@ -611,5 +611,101 @@ export async function sendGymDenialEmail(user, gym, message) {
     from:    { email: process.env.FROM_EMAIL, name: APP },
     subject: `Update on your ${APP} gym listing`,
     html:    systemBaseTemplate({ preheader: `An update on the gym listing for ${gym.name}.`, body }),
+  })
+}
+
+export async function sendJoinRequestEmail(gymOwner, fighter, gym) {
+  if (!process.env.SENDGRID_API_KEY) return
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+  const clientUrl = process.env.CLIENT_URL ?? 'https://boxingamateur.com'
+  const wins   = fighter.record?.wins   ?? 0
+  const losses = fighter.record?.losses ?? 0
+  const draws  = fighter.record?.draws  ?? 0
+  const record = `${wins}W · ${losses}L${draws > 0 ? ` · ${draws}D` : ''}`
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-family:${FONT_BAR};font-size:28px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:${NAVY};line-height:1.1;">New Join Request</h1>
+    <p style="margin:0 0 24px;font-family:${FONT_DM};font-size:15px;color:${TEXT_2};line-height:1.65;">
+      A fighter has requested to join <strong style="color:${TEXT}">${esc(gym.name)}</strong>.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
+      <tr>
+        <td style="background:#f5f5f5;border:1px solid ${BORDER};border-radius:10px;padding:20px 24px;">
+          <p style="margin:0 0 4px;font-family:${FONT_DM};font-size:16px;font-weight:600;color:${TEXT};">${esc(fighter.name)}</p>
+          ${fighter.username ? `<p style="margin:0 0 6px;font-family:${FONT_DM};font-size:13px;color:${TEXT_3};">@${esc(fighter.username)}</p>` : ''}
+          <p style="margin:0 0 4px;font-family:${FONT_DM};font-size:13px;color:${TEXT_3};">Record: ${esc(record)}</p>
+          ${fighter.weightClass ? `<p style="margin:0;font-family:${FONT_DM};font-size:13px;color:${TEXT_3};">${esc(fighter.weightClass)}</p>` : ''}
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0 0 20px;font-family:${FONT_DM};font-size:14px;color:${TEXT_2};line-height:1.65;">
+      Log in to approve or reject this request from your account page.
+    </p>
+
+    <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px;">
+      <tr>
+        <td style="background:${NAVY};border-radius:8px;padding:0;">
+          <a href="${clientUrl}/account" style="display:inline-block;padding:13px 28px;font-family:${FONT_BAR};font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${WHITE};text-decoration:none;">Review Request</a>
+        </td>
+      </tr>
+    </table>
+  `
+
+  await sgMail.send({
+    to:      gymOwner.email,
+    from:    { email: process.env.FROM_EMAIL, name: APP },
+    subject: `${esc(fighter.name)} wants to join ${esc(gym.name)} — ${APP}`,
+    html:    systemBaseTemplate({ preheader: `${fighter.name} has requested to join ${gym.name} on ${APP}.`, body }),
+  })
+}
+
+export async function sendAdminNewGymEmail(gym, owner) {
+  if (!process.env.SENDGRID_API_KEY) return
+  if (!process.env.ADMIN_EMAIL) return
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+  const clientUrl = process.env.CLIENT_URL ?? 'https://boxingamateur.com'
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-family:${FONT_BAR};font-size:28px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:${NAVY};line-height:1.1;">New Gym Sign-Up</h1>
+    <p style="margin:0 0 24px;font-family:${FONT_DM};font-size:15px;color:${TEXT_2};line-height:1.65;">
+      A new gym has just registered on ${APP}.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
+      <tr>
+        <td style="background:#f5f5f5;border:1px solid ${BORDER};border-radius:10px;padding:20px 24px;">
+          <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
+            <tr><td style="padding-bottom:8px;">
+              <p style="margin:0;font-family:${FONT_BAR};font-size:20px;font-weight:800;color:${NAVY};letter-spacing:0.5px;text-transform:uppercase;">${esc(gym.name)}</p>
+            </td></tr>
+            ${gym.city || gym.country ? `<tr><td style="padding-bottom:4px;"><p style="margin:0;font-family:${FONT_DM};font-size:13px;color:${TEXT_3};">${esc([gym.city, gym.postcode, gym.country].filter(Boolean).join(', '))}</p></td></tr>` : ''}
+            ${gym.address ? `<tr><td style="padding-bottom:4px;"><p style="margin:0;font-family:${FONT_DM};font-size:13px;color:${TEXT_3};">${esc(gym.address)}</p></td></tr>` : ''}
+            <tr><td style="padding-top:12px;border-top:1px solid ${BORDER};margin-top:12px;">
+              <p style="margin:0 0 2px;font-family:${FONT_DM};font-size:13px;color:${TEXT_2};"><strong>Owner:</strong> ${esc(owner.name)}</p>
+              <p style="margin:0;font-family:${FONT_DM};font-size:13px;color:${TEXT_3};">${esc(owner.email)}</p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px;">
+      <tr>
+        <td style="background:${NAVY};border-radius:8px;padding:0;">
+          <a href="${clientUrl}/admin" style="display:inline-block;padding:13px 28px;font-family:${FONT_BAR};font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:${WHITE};text-decoration:none;">View in Admin Panel</a>
+        </td>
+      </tr>
+    </table>
+  `
+
+  await sgMail.send({
+    to:      process.env.ADMIN_EMAIL,
+    from:    { email: process.env.FROM_EMAIL, name: APP },
+    subject: `New gym sign-up: ${gym.name} — ${APP}`,
+    html:    systemBaseTemplate({ preheader: `${gym.name} just registered on ${APP}.`, body }),
   })
 }

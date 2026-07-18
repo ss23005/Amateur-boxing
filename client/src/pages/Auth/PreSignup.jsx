@@ -30,9 +30,8 @@ const WOMENS_WEIGHT_CLASSES = [
 ]
 
 const ROLES = [
-  { value: 'fan',     label: 'Fan',     desc: 'Follow fighters & events' },
   { value: 'fighter', label: 'Fighter', desc: 'Showcase your record & career' },
-  { value: 'coach',   label: 'Coach',   desc: 'Train fighters & manage your gym' },
+  { value: 'gym',   label: 'Gym',     desc: 'Train fighters & manage your gym' },
 ]
 
 const FEATURES = [
@@ -63,11 +62,14 @@ export default function PreSignup() {
     gymPhone: '', gymWebsite: '', gymDescription: '',
     gymBrandColor: '',
     gymLogo: '',        // base64 data URL
+    gymGallery: [],     // array of base64 data URLs
   })
   const [gyms,        setGyms]       = useState([])
   const [gymsLoading, setGymsLoading] = useState(false)
   const [gymSearch,   setGymSearch]  = useState('')
-  const [logoPreview, setLogoPreview] = useState('')
+  const [logoPreview,    setLogoPreview]    = useState('')
+  const [galleryPreviews, setGalleryPreviews] = useState([])
+  const galleryInputRef = useRef(null)
   const [error, setError]   = useState('')
   const [loading, setLoading] = useState(false)
   const [fieldVal, setFieldVal] = useState({ name: null, username: null, email: null, password: null })
@@ -174,13 +176,32 @@ export default function PreSignup() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  const handleGalleryChange = (e) => {
+    const files = Array.from(e.target.files ?? []).slice(0, 6 - galleryPreviews.length)
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result
+        setGalleryPreviews(prev => [...prev, dataUrl].slice(0, 6))
+        setForm(prev => ({ ...prev, gymGallery: [...prev.gymGallery, dataUrl].slice(0, 6) }))
+      }
+      reader.readAsDataURL(file)
+    })
+    if (galleryInputRef.current) galleryInputRef.current.value = ''
+  }
+
+  const removeGalleryImage = (index) => {
+    setGalleryPreviews(prev => prev.filter((_, i) => i !== index))
+    setForm(prev => ({ ...prev, gymGallery: prev.gymGallery.filter((_, i) => i !== index) }))
+  }
+
   // How many steps to show in the indicator
-  const totalSteps = form.role === 'coach' ? 4 : form.role === 'fighter' ? 3 : 2
+  const totalSteps = form.role === 'gym' ? 4 : form.role === 'fighter' ? 3 : 2
 
   const stepTitle = (() => {
     if (step === 1) return 'Create Your Account'
     if (step === 2) return 'I Am A…'
-    if (step === 3) return form.role === 'coach' ? 'Your Club' : 'Fighter Profile'
+    if (step === 3) return form.role === 'gym' ? 'Your Club' : 'Fighter Profile'
     if (step === 4) return form.gymMode === 'new' ? 'Club Details' : 'Select Your Club'
     return ''
   })()
@@ -234,12 +255,12 @@ export default function PreSignup() {
 
     if (step === 2) {
       if (!form.role) { setError('Please select your role.'); return }
-      if (form.role === 'fighter' || form.role === 'coach') setStep(3)
+      if (form.role === 'fighter' || form.role === 'gym') setStep(3)
       else submit()
       return
     }
 
-    if (step === 3 && form.role === 'coach') {
+    if (step === 3 && form.role === 'gym') {
       if (!form.gymMode) { setError('Please choose New Club or Existing Club.'); return }
       setStep(4)
       return
@@ -251,12 +272,12 @@ export default function PreSignup() {
     setError('')
 
     // Validate new club minimum
-    if (form.role === 'coach' && form.gymMode === 'new' && !form.gym.trim()) {
+    if (form.role === 'gym' && form.gymMode === 'new' && !form.gym.trim()) {
       setError('Please enter your club name.')
       return
     }
     // Validate existing club selection
-    if (form.role === 'coach' && form.gymMode === 'existing' && !form.selectedGymId) {
+    if (form.role === 'gym' && form.gymMode === 'existing' && !form.selectedGymId) {
       setError('Please select your club from the list.')
       return
     }
@@ -280,8 +301,8 @@ export default function PreSignup() {
         <div className="psh-brand-row">
           <img src={logo} alt="Boxing Amateur" className="psh-logo" />
           <div className="psh-brand-text">
-            <span className="psh-brand-abbr">BA</span>
-            <span className="psh-brand-full">Boxing Amateur</span>
+            <span className="psh-brand-abbr">BOXINGAMATEUR.COM</span>
+            <span className="psh-brand-full">Grass roots to greatness</span>
           </div>
         </div>
 
@@ -315,8 +336,8 @@ export default function PreSignup() {
       {/* ── Right form panel ── */}
       <div className="presignup-form-panel">
         <div className="presignup-form-topbar">
-          <span className="psh-topbar-auth">
-            Already a member?&nbsp;<Link to="/sign-in" className="psh-topbar-signin">Sign in</Link>
+          <span className="psh-topbar-auth" style={{ color: 'var(--text-4)', fontSize: 12, letterSpacing: 1 }}>
+            BOXINGAMATEUR.COM
           </span>
         </div>
         <div className="presignup-form-inner">
@@ -404,7 +425,7 @@ export default function PreSignup() {
               <div className="btn-row">
                 <button className="btn btn-outline" type="button" onClick={() => { setError(''); setStep(1) }}>Back</button>
                 <button className="btn btn-primary btn-row-grow" type="submit">
-                  {form.role === 'fan' ? 'Create Account' : 'Next'}
+                  Next
                 </button>
               </div>
             </form>
@@ -527,7 +548,7 @@ export default function PreSignup() {
           )}
 
           {/* ── Step 3: Coach — new or existing club ── */}
-          {step === 3 && form.role === 'coach' && (
+          {step === 3 && form.role === 'gym' && (
             <form onSubmit={goNext}>
               <p style={{ fontSize: 14, color: 'var(--text-3)', marginBottom: 20 }}>
                 Are you registering a new club, or joining one that's already on the platform?
@@ -558,7 +579,7 @@ export default function PreSignup() {
           )}
 
           {/* ── Step 4: Coach — select existing club ── */}
-          {step === 4 && form.role === 'coach' && form.gymMode === 'existing' && (
+          {step === 4 && form.role === 'gym' && form.gymMode === 'existing' && (
             <form onSubmit={submit}>
               <div className="filter-search-wrap" style={{ marginBottom: 16 }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="filter-search-icon">
@@ -627,7 +648,7 @@ export default function PreSignup() {
           )}
 
           {/* ── Step 4: Coach — create new club ── */}
-          {step === 4 && form.role === 'coach' && form.gymMode === 'new' && (
+          {step === 4 && form.role === 'gym' && form.gymMode === 'new' && (
             <form onSubmit={submit}>
 
               {/* Logo upload */}
@@ -658,6 +679,48 @@ export default function PreSignup() {
                     </svg>
                     <span>Upload Logo</span>
                     <span style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 2 }}>PNG, JPG or SVG</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Gallery upload */}
+              <div className="form-group">
+                <label className="form-label">Gym Gallery <span style={{ color: 'var(--text-3)', fontWeight: 400 }}>(up to 6 photos)</span></label>
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={handleGalleryChange}
+                />
+                {galleryPreviews.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 8 }}>
+                    {galleryPreviews.map((src, i) => (
+                      <div key={i} style={{ position: 'relative' }}>
+                        <img src={src} alt={`Gallery ${i + 1}`} style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                        <button
+                          type="button"
+                          onClick={() => removeGalleryImage(i)}
+                          style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', borderRadius: 4, padding: '2px 6px', fontSize: 11, cursor: 'pointer' }}
+                        >✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {galleryPreviews.length < 6 && (
+                  <button
+                    type="button"
+                    className="logo-upload-btn"
+                    onClick={() => galleryInputRef.current?.click()}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, marginBottom: 4 }}>
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span>Add Photos</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 2 }}>{galleryPreviews.length}/6 added</span>
                   </button>
                 )}
               </div>
@@ -740,6 +803,10 @@ export default function PreSignup() {
               </div>
             </form>
           )}
+
+          <p style={{ marginTop: 28, textAlign: 'center', fontSize: 13, color: 'var(--text-3)' }}>
+            Already a member?&nbsp;<Link to="/sign-in" style={{ color: 'var(--navy)', fontWeight: 600 }}>Sign in</Link>
+          </p>
 
         </div>
       </div>

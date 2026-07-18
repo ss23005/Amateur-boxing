@@ -32,7 +32,7 @@ const WOMENS_WEIGHT_CLASSES = [
 const ROLES = [
   { value: 'fan',     label: 'Fan',     desc: 'Follow fighters & events' },
   { value: 'fighter', label: 'Fighter', desc: 'Showcase your record & career' },
-  { value: 'coach',   label: 'Coach',   desc: 'Train fighters & manage your gym' },
+  { value: 'gym',   label: 'Coach',   desc: 'Train fighters & manage your gym' },
 ]
 
 export default function Register() {
@@ -134,7 +134,7 @@ export default function Register() {
     }
   }
 
-  const totalSteps = (form.role === 'fighter' || form.role === 'coach') ? 3 : 2
+  const totalSteps = (form.role === 'fighter' || form.role === 'gym') ? 3 : 2
 
   const goNext = async (e) => {
     e.preventDefault()
@@ -184,7 +184,7 @@ export default function Register() {
         setError('Please select your role.')
         return
       }
-      if (form.role === 'fighter' || form.role === 'coach') {
+      if (form.role === 'fighter' || form.role === 'gym') {
         setStep(3)
       } else {
         submit()
@@ -234,7 +234,7 @@ export default function Register() {
         </div>
 
         <h2 className="auth-title">
-          {step === 1 ? 'Create Account' : step === 2 ? 'I Am A\u2026' : form.role === 'coach' ? 'Your Gym' : 'Fighter Profile'}
+          {step === 1 ? 'Create Account' : step === 2 ? 'I Am A\u2026' : form.role === 'gym' ? 'Your Gym' : 'Fighter Profile'}
         </h2>
 
         {error && <div className="error-banner">{error}</div>}
@@ -305,14 +305,14 @@ export default function Register() {
                 Back
               </button>
               <button className="btn btn-primary btn-row-grow" type="submit">
-                {(form.role === 'fighter' || form.role === 'coach') ? 'Next' : 'Create Account'}
+                {(form.role === 'fighter' || form.role === 'gym') ? 'Next' : 'Create Account'}
               </button>
             </div>
           </form>
         )}
 
         {/* Step 3 – coach gym */}
-        {step === 3 && form.role === 'coach' && (
+        {step === 3 && form.role === 'gym' && (
           <form onSubmit={gymStatus ? submit : checkGym}>
             {/* Gym name + check */}
             <div className="form-group">
