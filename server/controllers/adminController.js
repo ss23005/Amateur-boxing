@@ -468,3 +468,34 @@ export const adminRejectJoinRequest = async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 }
+
+export const reGeocodeGyms = async (req, res) => {
+  try {
+    const gyms = await Gym.find({
+      $or: [
+        { 'coordinates.lat': null },
+        { 'coordinates.lat': { $exists: false } },
+      ],
+    })
+
+    let updated = 0
+    let failed  = 0
+
+    for (const gym of gyms) {
+      const coords = await geocodeGym(gym)
+      if (coords) {
+        gym.coordinates = coords
+        await gym.save()
+        updated++
+      } else {
+        failed++
+      }
+      // Nominatim rate limit: 1 request/second
+      await new Promise(r => setTimeout(r, 1100))
+    }
+
+    res.json({ total: gyms.length, updated, failed })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}

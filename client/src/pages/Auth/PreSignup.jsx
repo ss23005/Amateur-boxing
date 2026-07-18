@@ -46,7 +46,7 @@ export default function PreSignup() {
   const navigate = useNavigate()
   const tutorial = useContext(TutorialContext)
 
-  if (!authLoading && user) return <Navigate to="/discover" replace />
+  if (!authLoading && user) return <Navigate to="/feed" replace />
 
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({

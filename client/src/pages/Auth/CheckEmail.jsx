@@ -61,7 +61,7 @@ export default function CheckEmail() {
     setError('')
     try {
       await api.post('/auth/verify-email', { code })
-      navigate('/discover')
+      navigate('/feed')
     } catch (err) {
       setError(err.response?.data?.message ?? 'Incorrect code. Please try again.')
       setDigits(['', '', '', '', '', ''])

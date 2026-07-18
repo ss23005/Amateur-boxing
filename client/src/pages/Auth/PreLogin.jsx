@@ -17,7 +17,7 @@ export default function PreLogin() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (!authLoading && user) return <Navigate to="/discover" replace />
+  if (!authLoading && user) return <Navigate to="/feed" replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -25,7 +25,7 @@ export default function PreLogin() {
     setLoading(true)
     try {
       const data = await login(form.email, form.password)
-      navigate(data.role === 'superadmin' ? '/admin' : '/discover')
+      navigate(data.role === 'superadmin' ? '/admin' : '/feed')
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Check your credentials.')
     } finally {

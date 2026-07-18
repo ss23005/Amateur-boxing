@@ -27,6 +27,7 @@ import {
   getAllJoinRequests,
   adminApproveJoinRequest,
   adminRejectJoinRequest,
+  reGeocodeGyms,
 } from '../controllers/adminController.js'
 
 const router = express.Router()
@@ -68,5 +69,8 @@ router.put('/pending/gyms/:id/deny',      denyGym)
 router.get('/join-requests',                          getAllJoinRequests)
 router.put('/join-requests/:userId/approve',          adminApproveJoinRequest)
 router.put('/join-requests/:userId/reject',           adminRejectJoinRequest)
+
+// Utilities
+router.post('/gyms/re-geocode',                       reGeocodeGyms)
 
 export default router

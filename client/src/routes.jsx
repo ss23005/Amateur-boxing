@@ -10,6 +10,7 @@ import Account from './pages/Account/Account'
 import Feed from './pages/Feed/Feed'
 import Discover from './pages/Discover/Discover'
 import FighterDirectory from './pages/Fighters/FighterDirectory'
+import FighterList from './pages/Fighters/FighterList'
 import GymDirectory from './pages/Gyms/GymDirectory'
 import UserPublicProfile from './pages/Users/UserPublicProfile'
 import GymPublicProfile from './pages/Gyms/GymPublicProfile'
@@ -32,7 +33,8 @@ const routes = [
   { path: '/feed',                  element: <ProtectedRoute><Feed /></ProtectedRoute> },
   { path: '/account',               element: <ProtectedRoute><Account /></ProtectedRoute>,                                noNav: true },
   { path: '/discover',              element: <ProtectedRoute><Discover /></ProtectedRoute>,                    noNav: true },
-  { path: '/fighters',              element: <ProtectedRoute><FighterDirectory /></ProtectedRoute>,            noNav: true },
+  { path: '/fighters',              element: <ProtectedRoute><FighterList /></ProtectedRoute> },
+  { path: '/fighters/directory',    element: <ProtectedRoute><FighterDirectory /></ProtectedRoute>,            noNav: true },
   { path: '/gyms',                  element: <ProtectedRoute><GymDirectory /></ProtectedRoute> },
   { path: '/gyms/:slug',            element: <GymPublicProfile />,                                            noNav: true },
   { path: '/users/:username',       element: <UserPublicProfile />,                                           noNav: true },

@@ -598,14 +598,15 @@ function GymEditForm({ gym, onSave, onCancel }) {
 }
 
 function GymsTab() {
-  const [gyms, setGyms]         = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
-  const [form, setForm]         = useState(EMPTY_GYM)
-  const [saving, setSaving]     = useState(false)
-  const [success, setSuccess]   = useState('')
-  const [deleting, setDeleting] = useState(null)
+  const [gyms, setGyms]           = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState('')
+  const [form, setForm]           = useState(EMPTY_GYM)
+  const [saving, setSaving]       = useState(false)
+  const [success, setSuccess]     = useState('')
+  const [deleting, setDeleting]   = useState(null)
   const [editingId, setEditingId] = useState(null)
+  const [geocoding, setGeocoding] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -653,6 +654,19 @@ function GymsTab() {
     setSuccess(`"${updated.name}" updated.`)
   }
 
+  const handleReGeocode = async () => {
+    setGeocoding(true); setError(''); setSuccess('')
+    try {
+      const { data } = await api.post('/admin/gyms/re-geocode')
+      setSuccess(`Re-geocoded: ${data.updated} updated, ${data.failed} could not be matched.`)
+      if (data.updated > 0) load()
+    } catch {
+      setError('Re-geocoding failed. Check server logs.')
+    } finally {
+      setGeocoding(false)
+    }
+  }
+
   if (loading) return <div className="adm-loading">Loading gyms…</div>
 
   return (
@@ -661,6 +675,21 @@ function GymsTab() {
 
       {success && <div className="adm-success">{success}</div>}
       {error   && <div className="adm-error-inline">{error}</div>}
+
+      {/* Map pin utility */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <button
+          className="btn btn-outline"
+          onClick={handleReGeocode}
+          disabled={geocoding}
+          style={{ fontSize: 13 }}
+        >
+          {geocoding ? 'Geocoding… (may take a moment)' : 'Fix Map Pins — Re-geocode Missing Locations'}
+        </button>
+        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+          Fills in coordinates for any gym missing a map pin
+        </span>
+      </div>
 
       {/* Add form */}
       <div className="adm-card" style={{ marginBottom: 28 }}>

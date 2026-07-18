@@ -12,7 +12,7 @@ function RootRedirect() {
   const { user, loading } = useAuth()
   if (loading) return null
   if (user?.role === 'superadmin') return <Navigate to="/admin" replace />
-  return <Navigate to={user ? '/discover' : '/welcome'} replace />
+  return <Navigate to={user ? '/feed' : '/welcome'} replace />
 }
 
 function timeAgoShort(date) {
