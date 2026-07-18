@@ -229,9 +229,9 @@ export default function FighterList() {
             const initial  = f.name.charAt(0).toUpperCase()
             const rank     = index + 1
             const location = f.location || f.user?.location || f.stats?.nationality || '—'
-            const isYou    = user && f.user && (
-              f.user._id === user._id || f.user._id?.toString() === user._id?.toString()
-            )
+            const isYou    = user && f.user &&
+              String(f.user._id) === String(user._id)
+            const avatarUrl = isYou ? user.avatar : f.user?.avatar
 
             return (
               <Link
@@ -244,7 +244,12 @@ export default function FighterList() {
                 </span>
 
                 <span className="fl-col-name fl-name-cell">
-                  <span className="fl-avatar">{initial}</span>
+                  <span className="fl-avatar" style={{ overflow: 'hidden' }}>
+                    {avatarUrl
+                      ? <img src={avatarUrl} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                      : initial
+                    }
+                  </span>
                   <span className="fl-name-text">
                     <span className="fl-name">{f.name}</span>
                     {isYou && <span className="fl-you-tag">YOU</span>}
