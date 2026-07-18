@@ -2,14 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../../services/api'
-import logo from '../../assets/Amateur-Boxing-Logo.png'
-
-const FEATURES = [
-  { text: 'Track your record & career' },
-  { text: 'Climb the amateur leaderboard' },
-  { text: 'Find gyms near you' },
-  { text: 'Connect with the community' },
-]
 
 const ROLE_LABELS = {
   fan:     'Fan',
@@ -355,53 +347,10 @@ export default function Account() {
   }
 
   return (
-    <div className="presignup-layout">
-
-      {/* ── Left hero panel ── */}
-      <div className="presignup-hero">
-        <div className="psh-brand-row">
-          <img src={logo} alt="Boxing Amateur" className="psh-logo" />
-          <div className="psh-brand-text">
-            <span className="psh-brand-abbr">BOXINGAMATEUR.COM</span>
-            <span className="psh-brand-full">Grass roots to greatness</span>
-          </div>
-        </div>
-
-        <div className="psh-headline">
-          <p className="psh-hl-eyebrow">The Home of</p>
-          <h1 className="psh-hl-main">
-            <span className="psh-hl-line">Boxing</span>
-            <span className="psh-hl-line psh-hl-line--red">Amateur</span>
-          </h1>
-          <div className="psh-rule" />
-          <p className="psh-sub">Track records, find gyms, and connect with fighters worldwide.</p>
-        </div>
-
-        <div className="psh-bottom">
-          <ul className="psh-features">
-            {FEATURES.map((f, i) => (
-              <li key={f.text} className="psh-feature">
-                <span className="psh-feature-num">0{i + 1}</span>
-                <span className="psh-feature-text">{f.text}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="psh-footer-strip">
-            <span>100% Free to Join</span>
-            <span aria-hidden="true">·</span>
-            <span>Grass Roots to Greatness</span>
-          </div>
-        </div>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <div style={{ borderBottom: '1px solid var(--border)', padding: '16px 24px', display: 'flex', alignItems: 'center' }}>
+        <Link to="/discover" className="back-link" style={{ color: 'var(--text-3)', fontSize: 13 }}>← Discover</Link>
       </div>
-
-      {/* ── Right account panel ── */}
-      <div className="presignup-form-panel">
-        <div className="presignup-form-topbar">
-          <span className="psh-topbar-auth">
-            <Link to="/discover" className="psh-topbar-signin">← Back to app</Link>
-          </span>
-        </div>
-        <div className="presignup-form-inner">
     <div className="account-page">
 
       {/* Profile card */}
@@ -706,8 +655,6 @@ export default function Account() {
       )}
 
     </div>
-        </div>
-      </div>
     </div>
   )
 }

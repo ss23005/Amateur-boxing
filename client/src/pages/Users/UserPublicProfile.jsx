@@ -54,8 +54,8 @@ export default function UserPublicProfile() {
     </div>
   )
 
-  // gymId is populated: { _id, name, logo, brandColor } or null
-  const gym = profile.gymId && typeof profile.gymId === 'object' ? profile.gymId : null
+  // gymId is populated: { _id, name, logo, brandColor } or null — only show if approved
+  const gym = profile.gymId && typeof profile.gymId === 'object' && profile.gymJoinStatus === 'approved' ? profile.gymId : null
   const clubColor  = gym?.brandColor || null
   const accentColor = clubColor || null
 

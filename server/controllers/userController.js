@@ -127,7 +127,7 @@ export const getPublicUsers = async (req, res) => {
 export const getUserPublicProfile = async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
-      .select('name username avatar role weightClass record location age gender gym gymId createdAt followers following stats')
+      .select('name username avatar role weightClass record location age gender gym gymId gymJoinStatus createdAt followers following stats')
       .populate('gymId', 'name logo brandColor slug')
     if (!user) return res.status(404).json({ message: 'User not found' })
     res.json(user)

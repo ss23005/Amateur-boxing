@@ -86,12 +86,23 @@ export default function Discover() {
             )}
           </div>
           {user && (
-            <button
-              onClick={handleLogout}
-              style={{ padding: '9px 18px', border: '1px solid var(--accent)', borderRadius: 'var(--r-sm)', background: '#fff', color: 'var(--accent)', fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              Sign out
-            </button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Link
+                to="/account"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 14px', border: '1px solid var(--border)', borderRadius: 'var(--r-sm)', background: '#fff', color: 'var(--text)', fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}
+              >
+                <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                style={{ padding: '9px 18px', border: '1px solid var(--accent)', borderRadius: 'var(--r-sm)', background: '#fff', color: 'var(--accent)', fontSize: 14, fontFamily: 'var(--sans)', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                Sign out
+              </button>
+            </div>
           )}
         </div>
 
