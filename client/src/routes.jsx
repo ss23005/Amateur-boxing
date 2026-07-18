@@ -1,6 +1,7 @@
 import PreSignup from './pages/Auth/PreSignup'
 import PreLogin from './pages/Auth/PreLogin'
 import CheckEmail from './pages/Auth/CheckEmail'
+import { Navigate } from 'react-router-dom'
 import ForgotPassword from './pages/Auth/ForgotPassword'
 import ResetPassword from './pages/Auth/ResetPassword'
 import ProtectedRoute from './components/common/ProtectedRoute'
@@ -20,7 +21,9 @@ import EventDetail from './pages/Events/EventDetail'
 const routes = [
   // ── Auth (no nav) ──
   { path: '/welcome',               element: <PreSignup />,                                                    noNav: true },
+  { path: '/register',              element: <Navigate to="/welcome"  replace />,                              noNav: true },
   { path: '/sign-in',               element: <PreLogin />,                                                     noNav: true },
+  { path: '/login',                 element: <Navigate to="/sign-in"  replace />,                              noNav: true },
   { path: '/check-email',           element: <CheckEmail />,                                                   noNav: true },
   { path: '/forgot-password',       element: <ForgotPassword />,                                               noNav: true },
   { path: '/reset-password/:token', element: <ResetPassword />,                                                noNav: true },

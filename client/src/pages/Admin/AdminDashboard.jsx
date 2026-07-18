@@ -861,7 +861,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
   const [tab, setTab] = useState('overview')
 
-  const handleLogout = () => { logout(); navigate('/login') }
+  const handleLogout = () => { logout(); navigate('/sign-in') }
 
   return (
     <div className="adm-shell">

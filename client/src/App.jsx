@@ -148,8 +148,8 @@ function Navbar() {
           </>
         ) : (
           <>
-            <NavLink to="/login"    className="navbar-link">Login</NavLink>
-            <NavLink to="/register" className="btn btn-ghost">Register</NavLink>
+            <NavLink to="/sign-in" className="navbar-link">Login</NavLink>
+            <NavLink to="/welcome"  className="btn btn-ghost">Register</NavLink>
           </>
         )}
       </div>
@@ -206,7 +206,7 @@ function MobileNav() {
           <span>Account</span>
         </NavLink>
       ) : (
-        <NavLink to="/login" className={cls}>
+        <NavLink to="/sign-in" className={cls}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
           </svg>

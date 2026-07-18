@@ -259,14 +259,14 @@ export default function Account() {
     ? new Date(user.createdAt).toLocaleDateString('default', { month: 'long', day: 'numeric', year: 'numeric' })
     : null
 
-  const handleLogout = () => { logout(); navigate('/login') }
+  const handleLogout = () => { logout(); navigate('/sign-in') }
 
   const handleDeleteAccount = async () => {
     setDeleting(true)
     try {
       await api.delete('/users/me')
       logout()
-      navigate('/login')
+      navigate('/sign-in')
     } catch {
       setDeleting(false)
       setShowDelete(false)
