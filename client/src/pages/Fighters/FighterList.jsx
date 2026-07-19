@@ -47,6 +47,7 @@ function XIcon({ size = 14 }) {
 export default function FighterList() {
   const { data: fighters, loading, error } = useFetch('/fighters')
   const { user } = useAuth()
+  const { data: myFighter } = useFetch(user?.role === 'fighter' ? '/fighters/me' : null)
 
   const [search,      setSearch]      = useState('')
   const [gender,      setGender]      = useState('')
@@ -226,25 +227,26 @@ export default function FighterList() {
 
           {filtered.map((f, index) => {
             const { wins = 0, losses = 0, draws = 0 } = f.record ?? {}
-            const initial  = f.name.charAt(0).toUpperCase()
-            const rank     = index + 1
-            const location = f.location || f.user?.location || f.stats?.nationality || '—'
-            const isYou    = user && f.user && (
-              f.user._id === user._id || f.user._id?.toString() === user._id?.toString()
-            )
+            const initial   = f.name.charAt(0).toUpperCase()
+            const rank      = index + 1
+            const location  = f.location || f.user?.location || f.stats?.nationality || '—'
+            const isYou     = myFighter ? String(f._id) === String(myFighter._id) : false
+            const avatarUrl = isYou ? user?.avatar : f.user?.avatar
+            const to        = f.user?.username ? `/users/${f.user.username}` : null
 
-            return (
-              <Link
-                key={f._id}
-                to={`/fighters/${f._id}`}
-                className={`fighter-list-row${isYou ? ' is-you' : ''}`}
-              >
+            const row = (
+              <>
                 <span className={`fl-col-rank fl-rank-num${rank <= 3 ? ' top-three' : ''}`}>
                   #{rank}
                 </span>
 
                 <span className="fl-col-name fl-name-cell">
-                  <span className="fl-avatar">{initial}</span>
+                  <span className="fl-avatar" style={{ overflow: 'hidden' }}>
+                    {avatarUrl
+                      ? <img src={avatarUrl} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }} />
+                      : initial
+                    }
+                  </span>
                   <span className="fl-name-text">
                     <span className="fl-name">{f.name}</span>
                     {isYou && <span className="fl-you-tag">YOU</span>}
@@ -260,8 +262,12 @@ export default function FighterList() {
                 <span className="fl-col-stat fl-stat-d">{draws}</span>
 
                 <span className="fl-col-location fl-location">{location}</span>
-              </Link>
+              </>
             )
+
+            return to
+              ? <Link key={f._id} to={to} className={`fighter-list-row${isYou ? ' is-you' : ''}`}>{row}</Link>
+              : <div  key={f._id}         className={`fighter-list-row${isYou ? ' is-you' : ''}`}>{row}</div>
           })}
         </div>
       )}
