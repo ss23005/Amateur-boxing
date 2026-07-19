@@ -22,7 +22,7 @@ export const getGyms = async (req, res) => {
     } else {
       query = { status: { $ne: 'pending' } }
     }
-    const gyms = await Gym.find(query).select('-logo').sort({ city: 1, name: 1 }).lean()
+    const gyms = await Gym.find(query).sort({ city: 1, name: 1 }).lean()
 
     // Attach approved member counts without N+1 queries
     const gymIds = gyms.map(g => g._id)

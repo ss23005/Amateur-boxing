@@ -141,8 +141,11 @@ export default function GymDirectory() {
                 onClick={() => setSelectedId(gym._id)}
               >
                 <div className="gym-card-header">
-                  <div className="gym-card-avatar">
-                    {gym.name.charAt(0).toUpperCase()}
+                  <div className="gym-card-avatar" style={gym.logo ? { background: '#fff' } : {}}>
+                    {gym.logo
+                      ? <img src={gym.logo} alt={gym.name} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '8px', display: 'block', boxSizing: 'border-box' }} />
+                      : gym.name.charAt(0).toUpperCase()
+                    }
                   </div>
                   <div className="gym-card-header-info">
                     <h3 className="gym-card-name">{gym.name}</h3>

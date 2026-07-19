@@ -10,7 +10,7 @@ function GymCard({ gym }) {
   return (
     <Link to={`/gyms/${gym.slug || gym._id}`} className="user-card">
       {gym.logo ? (
-        <img src={gym.logo} alt={gym.name} className="user-card-avatar" style={{ objectFit: 'cover', borderRadius: 10 }} />
+        <img src={gym.logo} alt={gym.name} className="user-card-avatar" style={{ objectFit: 'contain', background: '#fff', padding: 12, boxSizing: 'border-box', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }} />
       ) : (
         <div className="user-card-avatar">{initial}</div>
       )}

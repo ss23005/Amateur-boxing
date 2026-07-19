@@ -4560,6 +4560,7 @@ main { flex: 1; background: var(--bg); }
   color: #fff;
   flex-shrink: 0;
   letter-spacing: -0.5px;
+  overflow: hidden;
 }
 
 .gym-card-header-info { flex: 1; min-width: 0; }
